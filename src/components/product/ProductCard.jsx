@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { formatPrice } from '../../utils/formatPrice';
 import { useCart } from '../../contexts/CartContext';
@@ -12,6 +12,7 @@ import { useCart } from '../../contexts/CartContext';
  * @param {Function} props.onToggleFavorite - Toggle favorite handler
  */
 const ProductCard = ({ product, isFavorite = false, onToggleFavorite }) => {
+  const navigate = useNavigate();
   const { addToCart } = useCart();
 
   const handleQuickAdd = (e) => {
@@ -24,7 +25,7 @@ const ProductCard = ({ product, isFavorite = false, onToggleFavorite }) => {
     
     if (product.sizes.length > 1 || product.colors.length > 1) {
       // Navigate to product detail for selection
-      window.location.href = `/product/${product.id}`;
+      navigate(`/product/${product._id}`);
     } else {
       addToCart(product, defaultSize, defaultColor);
     }
@@ -34,25 +35,27 @@ const ProductCard = ({ product, isFavorite = false, onToggleFavorite }) => {
     e.preventDefault();
     e.stopPropagation();
     if (onToggleFavorite) {
-      onToggleFavorite(product.id);
+      onToggleFavorite(product._id); // Ensure _id is passed
     }
   };
 
   return (
-    <Link to={`/product/${product.id}`} className="group block">
+    <div className="group block">
       <div className="relative">
         {/* Product Image */}
         <div className="overflow-hidden bg-gray-50 aspect-[3/4] mb-3 relative">
-          <img
-            src={product.images[0]}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-            loading="lazy"
-          />
+          <Link to={`/product/${product._id}`}>
+            <img
+              src={product.images[0]}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              loading="lazy"
+            />
+          </Link>
 
           {/* Discount Badge */}
           {product.discount > 0 && (
-            <div className="absolute top-2 sm:top-3 left-2 sm:left-3">
+            <div className="absolute top-2 sm:top-3 left-2 sm:left-3 pointer-events-none">
               <span className="bg-red-500 text-white px-2 py-1 text-[10px] sm:text-xs font-medium">
                 -{product.discount}%
               </span>
@@ -61,7 +64,7 @@ const ProductCard = ({ product, isFavorite = false, onToggleFavorite }) => {
 
           {/* Tags */}
           {product.tags && product.tags.length > 0 && !product.discount && (
-            <div className="absolute top-2 sm:top-3 left-2 sm:left-3">
+            <div className="absolute top-2 sm:top-3 left-2 sm:left-3 pointer-events-none">
               {product.tags.slice(0, 1).map((tag) => (
                 <span
                   key={tag}
@@ -87,7 +90,9 @@ const ProductCard = ({ product, isFavorite = false, onToggleFavorite }) => {
         {/* Product Info */}
         <div className="flex justify-between items-start gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm sm:text-base truncate">{product.name}</h3>
+            <Link to={`/product/${product._id}`}>
+              <h3 className="font-medium text-sm sm:text-base truncate hover:underline">{product.name}</h3>
+            </Link>
             <p className="text-gray-500 text-xs sm:text-sm">{product.brand}</p>
             <div className="flex items-center gap-2 mt-1">
               <p className="text-black font-medium text-sm sm:text-base">
@@ -115,7 +120,7 @@ const ProductCard = ({ product, isFavorite = false, onToggleFavorite }) => {
           </button>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

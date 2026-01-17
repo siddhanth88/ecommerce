@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import productsData from '../data/products.json';
-import { applyFilters, getPriceRange } from '../utils/filterProducts';
+import productService from '../services/productService';
+import productsData from '../data/products.json'; // Fallback for config
 
 const ProductsContext = createContext();
 
@@ -13,10 +13,13 @@ export const useProducts = () => {
 };
 
 export const ProductsProvider = ({ children }) => {
-  const [products, setProducts] = useState(productsData.products);
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [categories, setCategories] = useState(['All', ...productsData.categories]);
   const [brands, setBrands] = useState(productsData.brands);
   const [config, setConfig] = useState(productsData.config);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Filters state
   const [filters, setFilters] = useState({
@@ -25,29 +28,62 @@ export const ProductsProvider = ({ children }) => {
     minPrice: 0,
     maxPrice: 1000,
     search: '',
-    sortBy: ''
+    sortBy: '',
+    page: 1,
+    limit: 12
   });
 
-  // Get price range from all products
-  const priceRange = getPriceRange(products);
+  // Price range
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
 
-  // Initialize price range
+  // Fetch products from API
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await productService.getAll(filters);
+      
+      setFilteredProducts(data.products || []);
+      
+      // If it's the first load, also set all products for price range calculation
+      if (products.length === 0) {
+        const allData = await productService.getAll({ limit: 1000 });
+        setProducts(allData.products || []);
+        
+        // Calculate price range
+        if (allData.products && allData.products.length > 0) {
+          const prices = allData.products.map(p => p.price);
+          const min = Math.floor(Math.min(...prices));
+          const max = Math.ceil(Math.max(...prices));
+          setPriceRange({ min, max });
+          
+          // Update filters with actual price range
+          setFilters(prev => ({
+            ...prev,
+            minPrice: min,
+            maxPrice: max
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError(err.response?.data?.error || 'Failed to fetch products');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch products when filters change
   useEffect(() => {
-    setFilters(prev => ({
-      ...prev,
-      minPrice: priceRange.min,
-      maxPrice: priceRange.max
-    }));
-  }, []);
-
-  // Get filtered products
-  const filteredProducts = applyFilters(products, filters);
+    fetchProducts();
+  }, [filters.category, filters.brands, filters.minPrice, filters.maxPrice, filters.search, filters.sortBy, filters.page]);
 
   // Update filter
   const updateFilter = (filterName, value) => {
     setFilters(prev => ({
       ...prev,
-      [filterName]: value
+      [filterName]: value,
+      page: filterName !== 'page' ? 1 : prev.page // Reset to page 1 when filter changes
     }));
   };
 
@@ -55,7 +91,8 @@ export const ProductsProvider = ({ children }) => {
   const updateFilters = (newFilters) => {
     setFilters(prev => ({
       ...prev,
-      ...newFilters
+      ...newFilters,
+      page: 1 // Reset to page 1
     }));
   };
 
@@ -67,13 +104,20 @@ export const ProductsProvider = ({ children }) => {
       minPrice: priceRange.min,
       maxPrice: priceRange.max,
       search: '',
-      sortBy: ''
+      sortBy: '',
+      page: 1,
+      limit: 12
     });
   };
 
   // Get product by ID
   const getProductById = (id) => {
-    return products.find(product => product.id === id);
+    // First try to find in current products
+    const product = products.find(product => product._id === id || product.id === id);
+    if (product) return product;
+    
+    // If not found, try in filtered products
+    return filteredProducts.find(product => product._id === id || product.id === id);
   };
 
   // Get related products (same category, excluding current product)
@@ -82,7 +126,7 @@ export const ProductsProvider = ({ children }) => {
     if (!product) return [];
 
     return products
-      .filter(p => p.category === product.category && p.id !== productId)
+      .filter(p => p.category === product.category && (p._id !== productId && p.id !== productId))
       .slice(0, limit);
   };
 
@@ -94,7 +138,7 @@ export const ProductsProvider = ({ children }) => {
 
   // Get products by tag
   const getProductsByTag = (tag) => {
-    return products.filter(p => p.tags.includes(tag));
+    return products.filter(p => p.tags && p.tags.includes(tag));
   };
 
   const value = {
@@ -105,16 +149,20 @@ export const ProductsProvider = ({ children }) => {
     config,
     filters,
     priceRange,
+    loading,
+    error,
     updateFilter,
     updateFilters,
     resetFilters,
     getProductById,
     getRelatedProducts,
     getProductsByCategory,
-    getProductsByTag
+    getProductsByTag,
+    refetch: fetchProducts
   };
 
   return <ProductsContext.Provider value={value}>{children}</ProductsContext.Provider>;
 };
 
 export default ProductsContext;
+

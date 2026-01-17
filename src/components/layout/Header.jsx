@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Search, User, Menu, X, Heart } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { ShoppingBag, Search, User, Menu, X, Heart, LogOut, Package } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import { useProducts } from '../../contexts/ProductsContext';
+import { useAuth } from '../../contexts/AuthContext';
 import CartDrawer from '../cart/CartDrawer';
 
 const Header = () => {
@@ -11,7 +12,14 @@ const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const { itemCount } = useCart();
   const { updateFilter, config } = useProducts();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -80,13 +88,37 @@ const Header = () => {
                   </span>
                 )}
               </button>
-              <button
-                className="hidden md:flex items-center space-x-1 text-sm font-medium hover:text-gray-600"
-                aria-label="Account"
-              >
-                <User className="w-4 h-4" />
-                <span>Account</span>
-              </button>
+              {user ? (
+                <div className="hidden md:flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Hi, {user.name.split(' ')[0]}</span>
+                  <Link 
+                    to="/my-orders" 
+                    className="p-2 hover:bg-gray-50 rounded-full transition-colors"
+                    aria-label="My Orders"
+                    title="My Orders"
+                  >
+                    <Package className="w-5 h-5" />
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="p-2 hover:bg-gray-50 rounded-full transition-colors text-gray-600 hover:text-red-600"
+                    aria-label="Logout"
+                    title="Logout"
+                  >
+                    <LogOut className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  state={{ from: location }}
+                  className="hidden md:flex items-center space-x-1 text-sm font-medium hover:text-gray-600"
+                  aria-label="Login"
+                >
+                  <User className="w-4 h-4" />
+                  <span>Login</span>
+                </Link>
+              )}
             </div>
           </div>
 
@@ -139,6 +171,15 @@ const Header = () => {
                   {item}
                 </Link>
               ))}
+              {user && (
+                <Link
+                  to="/my-orders"
+                  onClick={() => setMenuOpen(false)}
+                  className="block text-xl font-medium hover:text-gray-600 py-2"
+                >
+                  My Orders
+                </Link>
+              )}
             </nav>
 
             <div className="mt-12 pt-8 border-t border-gray-100">

@@ -11,9 +11,12 @@ export const useCart = () => {
   return context;
 };
 
+import orderService from '../services/orderService';
+
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useLocalStorage('cart', []);
   const [toast, setToast] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Show toast notification
   const showToast = (message, type = 'success') => {
@@ -38,7 +41,7 @@ export const CartProvider = ({ children }) => {
       // Check if item with same size and color already exists
       const existingIndex = prev.findIndex(
         item => 
-          item.id === product.id && 
+          (item._id === product._id || item.id === product.id) && 
           item.selectedSize === selectedSize && 
           item.selectedColor === selectedColor
       );
@@ -57,7 +60,7 @@ export const CartProvider = ({ children }) => {
           selectedSize,
           selectedColor,
           quantity: 1,
-          cartItemId: `${product.id}-${selectedSize}-${selectedColor}-${Date.now()}`
+          cartItemId: `${product._id || product.id}-${selectedSize}-${selectedColor}-${Date.now()}`
         }];
       }
     });
@@ -99,12 +102,69 @@ export const CartProvider = ({ children }) => {
   const tax = subtotal * 0.08; // 8% tax
   const total = subtotal + tax;
 
+  // Place Order
+  const placeOrder = async (shippingData) => {
+    try {
+      setLoading(true);
+      
+      // Filter out stale items (invalid IDs)
+      const validItems = cartItems.filter(item => {
+        const id = item._id || item.id;
+        return id && id.length === 24; // Simple check for MongoDB ObjectId length
+      });
+
+      if (validItems.length !== cartItems.length) {
+        setCartItems(validItems);
+        if (validItems.length === 0) {
+          showToast('Cart contained invalid items and was cleared. Please add products again.', 'error');
+          return { success: false, error: 'Cart cleared due to invalid items' };
+        }
+        showToast('Removed unavailable items from your cart.', 'info');
+      }
+
+      const orderItems = validItems.map(item => ({
+        product: item._id || item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        size: item.selectedSize,
+        color: item.selectedColor,
+        colorName: item.selectedColor,
+        image: item.images[0]
+      }));
+
+      const orderPayload = {
+        items: orderItems,
+        shippingAddress: shippingData.shippingAddress,
+        paymentMethod: shippingData.paymentMethod,
+        subtotal: validItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        tax: validItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.08,
+        total: (validItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 1.08)
+      };
+
+      const response = await orderService.create(orderPayload);
+      
+      clearCart();
+      showToast('Order placed successfully!', 'success');
+      return { success: true, order: response.order };
+    } catch (error) {
+      console.error('Order placement failed:', error);
+      const errorMsg = error.response?.data?.error || 'Failed to place order';
+      showToast(errorMsg, 'error');
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     cartItems,
     addToCart,
     removeFromCart,
     updateQuantity,
     clearCart,
+    placeOrder,
+    loading,
     subtotal,
     tax,
     total,
@@ -117,3 +177,4 @@ export const CartProvider = ({ children }) => {
 };
 
 export default CartContext;
+

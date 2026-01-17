@@ -202,7 +202,7 @@ const Home = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {filteredProducts.map((product) => (
                     <ProductCard
-                      key={product.id}
+                      key={product._id}
                       product={product}
                       isFavorite={favorites.includes(product.id)}
                       onToggleFavorite={handleToggleFavorite}

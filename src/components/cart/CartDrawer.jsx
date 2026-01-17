@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, ShoppingBag } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { formatPrice } from '../../utils/formatPrice';
 import CartItem from './CartItem';
@@ -13,6 +13,7 @@ import Button from '../common/Button';
  * @param {Function} props.onClose - Close handler
  */
 const CartDrawer = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const { cartItems, subtotal, tax, total, itemCount } = useCart();
 
   if (!isOpen) return null;
@@ -84,15 +85,14 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Checkout Button */}
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                  disabled
-                  title="Checkout coming soon"
+                {/* Checkout Button */}
+                <Link
+                  to="/checkout"
+                  onClick={onClose}
+                  className="w-full inline-flex items-center justify-center font-medium tracking-wide transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black bg-black text-white hover:bg-gray-800 px-8 py-3 text-base"
                 >
                   CHECKOUT
-                </Button>
+                </Link>
 
                 {/* Continue Shopping */}
                 <button

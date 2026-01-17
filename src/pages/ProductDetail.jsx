@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, Star, Heart, Share2, Truck, RotateCcw } from 'lucide-react';
 import { useProducts } from '../contexts/ProductsContext';
+import productService from '../services/productService';
 import { useCart } from '../contexts/CartContext';
 import { formatPrice } from '../utils/formatPrice';
 import ProductGallery from '../components/product/ProductGallery';
@@ -31,31 +32,52 @@ const ProductDetail = () => {
   const [recentlyViewed, setRecentlyViewed] = useLocalStorage('recentlyViewed', []);
 
   useEffect(() => {
-    const foundProduct = getProductById(id);
-    if (foundProduct) {
-      setProduct(foundProduct);
-      setRelatedProducts(getRelatedProducts(id));
-      
-      // Set default selections if only one option
-      if (foundProduct.sizes.length === 1) {
-        setSelectedSize(foundProduct.sizes[0]);
-      }
-      if (foundProduct.colors.length === 1) {
-        setSelectedColor(foundProduct.colors[0]);
-      }
+    const fetchProduct = async () => {
+      setIsLoading(true);
+      try {
+        // Try to get from context first
+        let foundProduct = getProductById(id);
+        
+        // If not in context, fetch from API
+        if (!foundProduct) {
+          try {
+            const data = await productService.getById(id);
+            foundProduct = data.product;
+          } catch (err) {
+            console.error('Failed to fetch product:', err);
+            navigate('/');
+            return;
+          }
+        }
 
-      // Add to recently viewed
-      setRecentlyViewed(prev => {
-        const filtered = prev.filter(pid => pid !== id);
-        return [id, ...filtered].slice(0, 10);
-      });
+        if (foundProduct) {
+          setProduct(foundProduct);
+          setRelatedProducts(getRelatedProducts(id));
+          
+          // Set default selections if only one option
+          if (foundProduct.sizes.length === 1) {
+            setSelectedSize(foundProduct.sizes[0]);
+          }
+          if (foundProduct.colors.length === 1) {
+            setSelectedColor(foundProduct.colors[0]);
+          }
 
-      // Scroll to top
-      window.scrollTo(0, 0);
-    } else {
-      navigate('/');
-    }
-  }, [id, getProductById, getRelatedProducts, navigate]); // Removed setRecentlyViewed from dependencies
+          // Add to recently viewed
+          setRecentlyViewed(prev => {
+            if (!prev) return [id];
+            const filtered = prev.filter(pid => pid !== id);
+            return [id, ...filtered].slice(0, 10);
+          });
+        }
+      } catch (error) {
+        console.error('Error in product detail:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id, getProductById, getRelatedProducts, navigate, setRecentlyViewed]);
 
 
   const handleAddToCart = () => {
@@ -78,7 +100,7 @@ const ProductDetail = () => {
     });
   };
 
-  if (!product) {
+  if (isLoading || !product) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <LoadingSkeleton variant="product-detail" />
