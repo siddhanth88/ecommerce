@@ -41,7 +41,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative h-[60vh] sm:h-[70vh] bg-black text-white overflow-hidden">
+      <section className="relative h-[60vh] sm:h-[100vh] bg-black text-white overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1920&h=1080&fit=crop&q=80"
