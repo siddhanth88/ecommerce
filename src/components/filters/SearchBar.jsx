@@ -15,8 +15,10 @@ const SearchBar = ({ value, onChange, placeholder = 'Search products...' }) => {
 
   // Update parent when debounced value changes
   React.useEffect(() => {
-    onChange(debouncedValue);
-  }, [debouncedValue, onChange]);
+    if (debouncedValue !== value) {
+      onChange(debouncedValue);
+    }
+  }, [debouncedValue, onChange, value]);
 
   // Sync with external value changes
   React.useEffect(() => {
