@@ -1,9 +1,9 @@
 {
   "config": {
     "storeName": "BLINK",
-    "currency": "USD",
-    "currencySymbol": "$",
-    "taxRate": 0.08
+    "currency": "INR",
+    "currencySymbol": "₹",
+    "taxRate": 0.00
   },
   "categories": [
     "T-Shirts",
