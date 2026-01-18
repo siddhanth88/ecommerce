@@ -12,6 +12,7 @@ import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
 import orderRoutes from './routes/orders.js';
 import adminRoutes from './routes/admin.js';
+import healthRoutes from './routes/health.js';
 
 const app = express();
 
@@ -44,13 +45,7 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Health check route
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Server is running',
-    timestamp: new Date().toISOString()
-  });
-});
+app.use('/health', healthRoutes);
 
 // API Routes
 app.use('/api/auth', authRoutes);
