@@ -117,15 +117,24 @@ const Header = () => {
                   </button>
                 </div>
               ) : (
-                <Link
-                  to="/login"
-                  state={{ from: location }}
-                  className="hidden md:flex items-center space-x-1 text-sm font-medium hover:text-gray-600"
-                  aria-label="Login"
-                >
-                  <User className="w-4 h-4" />
-                  <span>Login</span>
-                </Link>
+                <div className="hidden md:flex items-center space-x-1">
+                  <Link
+                    to="/login"
+                    state={{ from: location }}
+                    className="text-sm font-medium hover:text-gray-600 px-3 py-2"
+                    aria-label="Login"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    state={{ from: location }}
+                    className="text-sm font-medium bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-colors"
+                    aria-label="Register"
+                  >
+                    Register
+                  </Link>
+                </div>
               )}
             </div>
           </div>
