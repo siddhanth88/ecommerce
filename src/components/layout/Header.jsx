@@ -37,7 +37,7 @@ const Header = () => {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
+      <header className="sticky top-0 z-40 bg-white/20 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left Navigation */}
@@ -98,7 +98,7 @@ const Header = () => {
               </button>
               {user ? (
                 <div className="hidden md:flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">Hi, {user.name.split(' ')[0]}</span>
+                  <span className="text-sm text-black">Hi, {user.name.split(' ')[0]}</span>
                   <Link 
                     to="/my-orders" 
                     className="p-2 hover:bg-gray-50 rounded-full transition-colors"
@@ -109,7 +109,7 @@ const Header = () => {
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="p-2 hover:bg-gray-50 rounded-full transition-colors text-gray-600 hover:text-red-600"
+                    className="p-2 hover:bg-gray-50 rounded-full transition-colors text-black hover:text-red-600"
                     aria-label="Logout"
                     title="Logout"
                   >
