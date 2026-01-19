@@ -64,7 +64,15 @@ const Header = () => {
 
             {/* Center Logo */}
             <Link to="/" className="absolute left-1/2 transform -translate-x-1/2">
-              <h1 className="text-2xl font-bold tracking-tighter">{config.storeName}</h1>
+              {config.logo ? (
+                <img 
+                  src={config.logo} 
+                  alt={config.storeName} 
+                  className="h-8 md:h-10 object-contain"
+                />
+              ) : (
+                <h1 className="text-2xl font-bold tracking-tighter">{config.storeName}</h1>
+              )}
             </Link>
 
             {/* Right Icons */}

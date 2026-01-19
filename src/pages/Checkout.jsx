@@ -4,6 +4,7 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import { formatPrice } from '../utils/formatPrice';
+import productsData from '../data/products.json';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -195,7 +196,7 @@ const Checkout = () => {
               <span className="font-medium">{formatPrice(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Tax (8%)</span>
+              <span className="text-gray-600">Tax ({(productsData.config.taxRate * 100).toFixed(0)}%)</span>
               <span className="font-medium">{formatPrice(tax)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200 mt-2">

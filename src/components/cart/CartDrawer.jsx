@@ -3,6 +3,7 @@ import { X, ShoppingBag } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { formatPrice } from '../../utils/formatPrice';
+import productsData from '../../data/products.json';
 import CartItem from './CartItem';
 import Button from '../common/Button';
 
@@ -74,7 +75,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
                 {/* Tax */}
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax (8%)</span>
+                  <span className="text-gray-600">Tax ({(productsData.config.taxRate * 100).toFixed(0)}%)</span>
                   <span className="font-medium">{formatPrice(tax)}</span>
                 </div>
 

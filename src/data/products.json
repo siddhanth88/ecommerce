@@ -1,9 +1,11 @@
 {
   "config": {
     "storeName": "BLINK",
+    "logo": "https://placehold.co/150x50?text=BLINK",
     "currency": "INR",
     "currencySymbol": "₹",
-    "taxRate": 0.00
+    "taxRate": 0.18,
+    "takeRate": 0.10
   },
   "categories": [
     "T-Shirts",
@@ -34,12 +36,29 @@
         "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800&h=1000&fit=crop",
         "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["S", "M", "L", "XL", "XXL"],
-      "colors": ["#000000", "#FFFFFF", "#1E3A8A"],
-      "colorNames": ["Black", "White", "Navy"],
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "colors": [
+        "#000000",
+        "#FFFFFF",
+        "#1E3A8A"
+      ],
+      "colorNames": [
+        "Black",
+        "White",
+        "Navy"
+      ],
       "stock": 50,
       "description": "100% premium cotton t-shirt with a relaxed fit. Perfect for everyday wear with superior comfort and breathability.",
-      "tags": ["Best Seller", "New"],
+      "tags": [
+        "Best Seller",
+        "New"
+      ],
       "rating": 4.5,
       "reviews": 128
     },
@@ -55,12 +74,24 @@
         "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=800&h=1000&fit=crop",
         "https://images.unsplash.com/photo-1622445275463-afa2ab738c34?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["M", "L", "XL"],
-      "colors": ["#000000", "#DC2626"],
-      "colorNames": ["Black", "Red"],
+      "sizes": [
+        "M",
+        "L",
+        "XL"
+      ],
+      "colors": [
+        "#000000",
+        "#DC2626"
+      ],
+      "colorNames": [
+        "Black",
+        "Red"
+      ],
       "stock": 35,
       "description": "Oversized fit graphic t-shirt made from soft cotton blend. Features unique street art design.",
-      "tags": ["Trending"],
+      "tags": [
+        "Trending"
+      ],
       "rating": 4.3,
       "reviews": 89
     },
@@ -75,12 +106,24 @@
       "images": [
         "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["XS", "S", "M", "L", "XL"],
-      "colors": ["#FFFFFF"],
-      "colorNames": ["White"],
+      "sizes": [
+        "XS",
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "colors": [
+        "#FFFFFF"
+      ],
+      "colorNames": [
+        "White"
+      ],
       "stock": 100,
       "description": "Essential white t-shirt. A wardrobe staple made from premium cotton.",
-      "tags": ["Essential"],
+      "tags": [
+        "Essential"
+      ],
       "rating": 4.7,
       "reviews": 256
     },
@@ -96,12 +139,27 @@
         "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&h=1000&fit=crop",
         "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["S", "M", "L", "XL"],
-      "colors": ["#000000", "#6B7280", "#1E3A8A"],
-      "colorNames": ["Black", "Gray", "Navy"],
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "colors": [
+        "#000000",
+        "#6B7280",
+        "#1E3A8A"
+      ],
+      "colorNames": [
+        "Black",
+        "Gray",
+        "Navy"
+      ],
       "stock": 45,
       "description": "Premium heavyweight hoodie with fleece lining. Features adjustable drawstring hood and kangaroo pocket.",
-      "tags": ["Best Seller"],
+      "tags": [
+        "Best Seller"
+      ],
       "rating": 4.8,
       "reviews": 342
     },
@@ -116,12 +174,25 @@
       "images": [
         "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["M", "L", "XL", "XXL"],
-      "colors": ["#000000", "#DC2626"],
-      "colorNames": ["Black", "Red"],
+      "sizes": [
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "colors": [
+        "#000000",
+        "#DC2626"
+      ],
+      "colorNames": [
+        "Black",
+        "Red"
+      ],
       "stock": 28,
       "description": "Full-zip hoodie with ribbed cuffs and hem. Perfect layering piece for any season.",
-      "tags": ["New"],
+      "tags": [
+        "New"
+      ],
       "rating": 4.4,
       "reviews": 67
     },
@@ -137,12 +208,26 @@
         "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&h=1000&fit=crop",
         "https://images.unsplash.com/photo-1520975954732-35dd22299614?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["S", "M", "L", "XL"],
-      "colors": ["#000000", "#78350F"],
-      "colorNames": ["Black", "Brown"],
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "colors": [
+        "#000000",
+        "#78350F"
+      ],
+      "colorNames": [
+        "Black",
+        "Brown"
+      ],
       "stock": 15,
       "description": "Genuine leather bomber jacket with quilted lining. Classic design with modern fit.",
-      "tags": ["Luxury", "Best Seller"],
+      "tags": [
+        "Luxury",
+        "Best Seller"
+      ],
       "rating": 4.9,
       "reviews": 178
     },
@@ -157,12 +242,25 @@
       "images": [
         "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["S", "M", "L", "XL"],
-      "colors": ["#1E3A8A", "#000000"],
-      "colorNames": ["Blue Denim", "Black Denim"],
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "colors": [
+        "#1E3A8A",
+        "#000000"
+      ],
+      "colorNames": [
+        "Blue Denim",
+        "Black Denim"
+      ],
       "stock": 40,
       "description": "Classic denim jacket with button closure. Timeless style that never goes out of fashion.",
-      "tags": ["Essential"],
+      "tags": [
+        "Essential"
+      ],
       "rating": 4.6,
       "reviews": 203
     },
@@ -177,12 +275,26 @@
       "images": [
         "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["M", "L", "XL"],
-      "colors": ["#000000", "#FFFFFF", "#DC2626"],
-      "colorNames": ["Black", "White", "Red"],
+      "sizes": [
+        "M",
+        "L",
+        "XL"
+      ],
+      "colors": [
+        "#000000",
+        "#FFFFFF",
+        "#DC2626"
+      ],
+      "colorNames": [
+        "Black",
+        "White",
+        "Red"
+      ],
       "stock": 32,
       "description": "Lightweight windbreaker with water-resistant coating. Perfect for unpredictable weather.",
-      "tags": ["New"],
+      "tags": [
+        "New"
+      ],
       "rating": 4.2,
       "reviews": 54
     },
@@ -198,12 +310,29 @@
         "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800&h=1000&fit=crop",
         "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["28", "30", "32", "34", "36"],
-      "colors": ["#000000", "#6B7280", "#78350F"],
-      "colorNames": ["Black", "Gray", "Khaki"],
+      "sizes": [
+        "28",
+        "30",
+        "32",
+        "34",
+        "36"
+      ],
+      "colors": [
+        "#000000",
+        "#6B7280",
+        "#78350F"
+      ],
+      "colorNames": [
+        "Black",
+        "Gray",
+        "Khaki"
+      ],
       "stock": 55,
       "description": "Utility cargo pants with multiple pockets. Durable cotton twill construction.",
-      "tags": ["Trending", "Best Seller"],
+      "tags": [
+        "Trending",
+        "Best Seller"
+      ],
       "rating": 4.5,
       "reviews": 167
     },
@@ -218,12 +347,27 @@
       "images": [
         "https://images.unsplash.com/photo-1542272604-787c3835535d?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["28", "30", "32", "34", "36", "38"],
-      "colors": ["#1E3A8A", "#000000"],
-      "colorNames": ["Blue Denim", "Black"],
+      "sizes": [
+        "28",
+        "30",
+        "32",
+        "34",
+        "36",
+        "38"
+      ],
+      "colors": [
+        "#1E3A8A",
+        "#000000"
+      ],
+      "colorNames": [
+        "Blue Denim",
+        "Black"
+      ],
       "stock": 70,
       "description": "Classic slim fit jeans with stretch denim. Comfortable all-day wear.",
-      "tags": ["Essential"],
+      "tags": [
+        "Essential"
+      ],
       "rating": 4.4,
       "reviews": 289
     },
@@ -238,12 +382,25 @@
       "images": [
         "https://images.unsplash.com/photo-1555689502-c4b22d76c56f?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["S", "M", "L", "XL"],
-      "colors": ["#000000", "#6B7280"],
-      "colorNames": ["Black", "Gray"],
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "colors": [
+        "#000000",
+        "#6B7280"
+      ],
+      "colorNames": [
+        "Black",
+        "Gray"
+      ],
       "stock": 48,
       "description": "Comfortable jogger pants with elastic waistband and cuffs. Perfect for casual wear.",
-      "tags": ["New"],
+      "tags": [
+        "New"
+      ],
       "rating": 4.3,
       "reviews": 112
     },
@@ -258,12 +415,28 @@
       "images": [
         "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["28", "30", "32", "34", "36"],
-      "colors": ["#78350F", "#1E3A8A", "#000000"],
-      "colorNames": ["Khaki", "Navy", "Black"],
+      "sizes": [
+        "28",
+        "30",
+        "32",
+        "34",
+        "36"
+      ],
+      "colors": [
+        "#78350F",
+        "#1E3A8A",
+        "#000000"
+      ],
+      "colorNames": [
+        "Khaki",
+        "Navy",
+        "Black"
+      ],
       "stock": 42,
       "description": "Classic chino pants with a modern slim fit. Versatile for both casual and smart-casual occasions.",
-      "tags": ["Essential"],
+      "tags": [
+        "Essential"
+      ],
       "rating": 4.6,
       "reviews": 198
     },
@@ -279,12 +452,28 @@
         "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&h=1000&fit=crop",
         "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["7", "8", "9", "10", "11", "12"],
-      "colors": ["#FFFFFF", "#000000"],
-      "colorNames": ["White", "Black"],
+      "sizes": [
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12"
+      ],
+      "colors": [
+        "#FFFFFF",
+        "#000000"
+      ],
+      "colorNames": [
+        "White",
+        "Black"
+      ],
       "stock": 60,
       "description": "Classic canvas sneakers with rubber sole. Timeless design for everyday wear.",
-      "tags": ["Best Seller", "Essential"],
+      "tags": [
+        "Best Seller",
+        "Essential"
+      ],
       "rating": 4.7,
       "reviews": 412
     },
@@ -299,12 +488,28 @@
       "images": [
         "https://images.unsplash.com/photo-1520256862855-398228c41684?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["7", "8", "9", "10", "11"],
-      "colors": ["#000000", "#FFFFFF", "#DC2626"],
-      "colorNames": ["Black", "White", "Red"],
+      "sizes": [
+        "7",
+        "8",
+        "9",
+        "10",
+        "11"
+      ],
+      "colors": [
+        "#000000",
+        "#FFFFFF",
+        "#DC2626"
+      ],
+      "colorNames": [
+        "Black",
+        "White",
+        "Red"
+      ],
       "stock": 38,
       "description": "High-top sneakers with padded collar and tongue. Street-style essential.",
-      "tags": ["Trending"],
+      "tags": [
+        "Trending"
+      ],
       "rating": 4.5,
       "reviews": 156
     },
@@ -319,12 +524,29 @@
       "images": [
         "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["7", "8", "9", "10", "11", "12"],
-      "colors": ["#000000", "#FFFFFF", "#1E3A8A"],
-      "colorNames": ["Black", "White", "Navy"],
+      "sizes": [
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12"
+      ],
+      "colors": [
+        "#000000",
+        "#FFFFFF",
+        "#1E3A8A"
+      ],
+      "colorNames": [
+        "Black",
+        "White",
+        "Navy"
+      ],
       "stock": 44,
       "description": "Performance running shoes with cushioned sole and breathable mesh upper.",
-      "tags": ["New"],
+      "tags": [
+        "New"
+      ],
       "rating": 4.8,
       "reviews": 234
     },
@@ -339,12 +561,26 @@
       "images": [
         "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["7", "8", "9", "10", "11"],
-      "colors": ["#78350F", "#000000"],
-      "colorNames": ["Brown", "Black"],
+      "sizes": [
+        "7",
+        "8",
+        "9",
+        "10",
+        "11"
+      ],
+      "colors": [
+        "#78350F",
+        "#000000"
+      ],
+      "colorNames": [
+        "Brown",
+        "Black"
+      ],
       "stock": 22,
       "description": "Premium leather boots with durable construction. Perfect for all seasons.",
-      "tags": ["Luxury"],
+      "tags": [
+        "Luxury"
+      ],
       "rating": 4.9,
       "reviews": 187
     },
@@ -359,12 +595,25 @@
       "images": [
         "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["One Size"],
-      "colors": ["#000000", "#FFFFFF", "#1E3A8A"],
-      "colorNames": ["Black", "White", "Navy"],
+      "sizes": [
+        "One Size"
+      ],
+      "colors": [
+        "#000000",
+        "#FFFFFF",
+        "#1E3A8A"
+      ],
+      "colorNames": [
+        "Black",
+        "White",
+        "Navy"
+      ],
       "stock": 80,
       "description": "Classic baseball cap with adjustable strap. Embroidered logo detail.",
-      "tags": ["Essential", "New"],
+      "tags": [
+        "Essential",
+        "New"
+      ],
       "rating": 4.4,
       "reviews": 145
     },
@@ -379,12 +628,24 @@
       "images": [
         "https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["One Size"],
-      "colors": ["#000000", "#6B7280", "#DC2626"],
-      "colorNames": ["Black", "Gray", "Red"],
+      "sizes": [
+        "One Size"
+      ],
+      "colors": [
+        "#000000",
+        "#6B7280",
+        "#DC2626"
+      ],
+      "colorNames": [
+        "Black",
+        "Gray",
+        "Red"
+      ],
       "stock": 65,
       "description": "Warm knit beanie perfect for cold weather. Soft acrylic blend.",
-      "tags": ["Best Seller"],
+      "tags": [
+        "Best Seller"
+      ],
       "rating": 4.6,
       "reviews": 203
     },
@@ -399,12 +660,25 @@
       "images": [
         "https://images.unsplash.com/photo-1624222247344-550fb60583f2?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["S", "M", "L", "XL"],
-      "colors": ["#78350F", "#000000"],
-      "colorNames": ["Brown", "Black"],
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "colors": [
+        "#78350F",
+        "#000000"
+      ],
+      "colorNames": [
+        "Brown",
+        "Black"
+      ],
       "stock": 50,
       "description": "Genuine leather belt with metal buckle. Classic accessory for any outfit.",
-      "tags": ["Essential"],
+      "tags": [
+        "Essential"
+      ],
       "rating": 4.7,
       "reviews": 167
     },
@@ -419,12 +693,24 @@
       "images": [
         "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["One Size"],
-      "colors": ["#000000", "#1E3A8A", "#6B7280"],
-      "colorNames": ["Black", "Navy", "Gray"],
+      "sizes": [
+        "One Size"
+      ],
+      "colors": [
+        "#000000",
+        "#1E3A8A",
+        "#6B7280"
+      ],
+      "colorNames": [
+        "Black",
+        "Navy",
+        "Gray"
+      ],
       "stock": 35,
       "description": "Durable canvas backpack with multiple compartments. Perfect for daily use.",
-      "tags": ["Trending"],
+      "tags": [
+        "Trending"
+      ],
       "rating": 4.5,
       "reviews": 189
     },
@@ -439,12 +725,22 @@
       "images": [
         "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["One Size"],
-      "colors": ["#000000", "#78350F"],
-      "colorNames": ["Black", "Tortoise"],
+      "sizes": [
+        "One Size"
+      ],
+      "colors": [
+        "#000000",
+        "#78350F"
+      ],
+      "colorNames": [
+        "Black",
+        "Tortoise"
+      ],
       "stock": 42,
       "description": "UV protection sunglasses with polarized lenses. Classic aviator style.",
-      "tags": ["Luxury"],
+      "tags": [
+        "Luxury"
+      ],
       "rating": 4.8,
       "reviews": 156
     },
@@ -459,12 +755,24 @@
       "images": [
         "https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["One Size"],
-      "colors": ["#000000", "#6B7280", "#1E3A8A"],
-      "colorNames": ["Black", "Gray", "Navy"],
+      "sizes": [
+        "One Size"
+      ],
+      "colors": [
+        "#000000",
+        "#6B7280",
+        "#1E3A8A"
+      ],
+      "colorNames": [
+        "Black",
+        "Gray",
+        "Navy"
+      ],
       "stock": 55,
       "description": "Soft wool scarf for cold weather. Lightweight and warm.",
-      "tags": ["New"],
+      "tags": [
+        "New"
+      ],
       "rating": 4.5,
       "reviews": 98
     },
@@ -479,12 +787,22 @@
       "images": [
         "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["One Size"],
-      "colors": ["#000000", "#FFFFFF"],
-      "colorNames": ["Black", "White"],
+      "sizes": [
+        "One Size"
+      ],
+      "colors": [
+        "#000000",
+        "#FFFFFF"
+      ],
+      "colorNames": [
+        "Black",
+        "White"
+      ],
       "stock": 28,
       "description": "Compact crossbody bag with adjustable strap. Perfect for essentials.",
-      "tags": ["Trending"],
+      "tags": [
+        "Trending"
+      ],
       "rating": 4.4,
       "reviews": 134
     },
@@ -499,12 +817,23 @@
       "images": [
         "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=1000&fit=crop"
       ],
-      "sizes": ["One Size"],
-      "colors": ["#000000", "#C0C0C0"],
-      "colorNames": ["Black", "Silver"],
+      "sizes": [
+        "One Size"
+      ],
+      "colors": [
+        "#000000",
+        "#C0C0C0"
+      ],
+      "colorNames": [
+        "Black",
+        "Silver"
+      ],
       "stock": 18,
       "description": "Minimalist watch with leather strap. Japanese quartz movement.",
-      "tags": ["Luxury", "Best Seller"],
+      "tags": [
+        "Luxury",
+        "Best Seller"
+      ],
       "rating": 4.9,
       "reviews": 267
     }

@@ -1,10 +1,14 @@
+import productsData from '../data/products.json';
+
+const { config } = productsData;
+
 /**
  * Format price with currency symbol
  * @param {number} price - Price to format
- * @param {string} currencySymbol - Currency symbol (default: $)
+ * @param {string} currencySymbol - Currency symbol (default: from config)
  * @returns {string} Formatted price string
  */
-export const formatPrice = (price, currencySymbol = '$') => {
+export const formatPrice = (price, currencySymbol = config.currencySymbol) => {
   return `${currencySymbol}${price.toFixed(2)}`;
 };
 
@@ -33,10 +37,10 @@ export const applyDiscount = (price, discount) => {
 /**
  * Format currency for display
  * @param {number} amount - Amount to format
- * @param {string} currency - Currency code (default: USD)
+ * @param {string} currency - Currency code (default: from config)
  * @returns {string} Formatted currency string
  */
-export const formatCurrency = (amount, currency = 'USD') => {
+export const formatCurrency = (amount, currency = config.currency) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,

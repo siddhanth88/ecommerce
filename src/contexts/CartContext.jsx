@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import productsData from '../data/products.json';
 
 const CartContext = createContext();
 
@@ -97,9 +98,12 @@ export const CartProvider = ({ children }) => {
   };
 
   // Calculate totals
+  const { config } = productsData;
+  const taxRate = config.taxRate || 0; // Default to 0 if not set
+
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const tax = subtotal * 0.08; // 8% tax
+  const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
   // Place Order
@@ -133,13 +137,16 @@ export const CartProvider = ({ children }) => {
         image: item.images[0]
       }));
 
+      const currentSubtotal = validItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const currentTax = currentSubtotal * taxRate;
+      
       const orderPayload = {
         items: orderItems,
         shippingAddress: shippingData.shippingAddress,
         paymentMethod: shippingData.paymentMethod,
-        subtotal: validItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        tax: validItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.08,
-        total: (validItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 1.08)
+        subtotal: currentSubtotal,
+        tax: currentTax,
+        total: currentSubtotal + currentTax
       };
 
       const response = await orderService.create(orderPayload);
