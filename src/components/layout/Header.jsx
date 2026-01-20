@@ -42,7 +42,7 @@ const Header = () => {
           <div className="flex items-center justify-between h-16">
             {/* Left Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/" className="text-sm font-medium hover:text-gray-600 transition-colors">
+              <Link to="/products" className="text-sm font-medium hover:text-gray-600 transition-colors">
                 Shop
               </Link>
               <Link to="/" className="text-sm font-medium hover:text-gray-600 transition-colors">

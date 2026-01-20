@@ -7,6 +7,7 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
+import Products from './pages/Products';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Checkout from './pages/Checkout';
@@ -55,6 +56,7 @@ function App() {
                   {/* Public & User Routes */}
                   <Route element={<MainLayout />}>
                     <Route path="/" element={<Home />} />
+                    <Route path="/products" element={<Products />} />
                     <Route path="/product/:id" element={<ProductDetail />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />

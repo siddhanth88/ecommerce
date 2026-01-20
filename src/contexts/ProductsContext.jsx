@@ -18,6 +18,7 @@ export const ProductsProvider = ({ children }) => {
   const [categories, setCategories] = useState(['All', ...productsData.categories]);
   const [brands, setBrands] = useState(productsData.brands);
   const [config, setConfig] = useState(productsData.config);
+  const [homeConfig, setHomeConfig] = useState(productsData.home || {});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -147,6 +148,7 @@ export const ProductsProvider = ({ children }) => {
     categories,
     brands,
     config,
+    homeConfig,
     filters,
     priceRange,
     loading,

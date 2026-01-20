@@ -1,285 +1,173 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import { useProducts } from '../contexts/ProductsContext';
-import ProductCard from '../components/product/ProductCard';
-import SearchBar from '../components/filters/SearchBar';
-import SortDropdown from '../components/filters/SortDropdown';
-import CategoryFilter, { BrandFilter } from '../components/filters/CategoryFilter';
-import PriceRangeFilter from '../components/filters/PriceRangeFilter';
-import LoadingSkeleton from '../components/common/LoadingSkeleton';
-import { Filter, X } from 'lucide-react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import Marquee from '../components/common/Marquee';
+import FeaturedSection from '../components/home/FeaturedSection';
+import Testimonials from '../components/home/Testimonials';
+import CategoryNav from '../components/home/CategoryNav';
 
 const Home = () => {
-  const { 
-    filteredProducts, 
-    filters, 
-    updateFilter, 
-    updateFilters,
-    resetFilters,
-    priceRange 
-  } = useProducts();
+  const { homeConfig } = useProducts();
 
-  const [favorites, setFavorites] = useLocalStorage('favorites', []);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  if (!homeConfig) return null;
 
-  const handleToggleFavorite = (productId) => {
-    setFavorites(prev => {
-      if (prev.includes(productId)) {
-        return prev.filter(id => id !== productId);
-      }
-      return [...prev, productId];
-    });
-  };
-
-  const activeFiltersCount = 
-    (filters.category !== 'All' ? 1 : 0) +
-    filters.brands.length +
-    (filters.search ? 1 : 0) +
-    (filters.minPrice !== priceRange.min || filters.maxPrice !== priceRange.max ? 1 : 0);
+  const { hero, marquee, banners, featured, newsletter, testimonials, categoryNav } = homeConfig;
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative h-[60vh] sm:h-[100vh] bg-black text-white overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1920&h=1080&fit=crop&q=80"
-            alt="Hero"
-            className="w-full h-full object-cover opacity-40"
-          />
-        </div>
-
-        <div className="relative h-full flex items-center">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8 w-full">
-            <div className="max-w-2xl">
-              <div className="text-xs sm:text-sm font-medium tracking-[0.3em] text-white/70 mb-4">
-                THE ULTIMATE STREETWEAR COLLECTION
-              </div>
-              <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-6 leading-none">
-                LAYERS<br />
-                FOR THE<br />
-                CITY
-              </h1>
-              <p className="text-base sm:text-lg md:text-xl text-white/80 mb-8 max-w-xl">
-                Minimal essentials crafted for urban living. Quality streetwear designed for everyday comfort and style.
-              </p>
-              <button
-                onClick={() => document.querySelector('.products-section')?.scrollIntoView({ behavior: 'smooth' })}
-                className="bg-white text-black px-8 sm:px-10 py-3 sm:py-4 text-xs sm:text-sm font-medium tracking-wider hover:bg-gray-100 transition-all duration-300"
-              >
-                SHOP NOW
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Products Section */}
-      <section className="products-section py-8 sm:py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header with Search and Sort */}
-          <div className="mb-6 space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold">
-                  {filters.category === 'All' ? 'All Products' : filters.category}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-                </p>
-              </div>
-
-              <div className="flex gap-3 w-full sm:w-auto">
-                {/* Mobile Filter Button */}
-                <button
-                  onClick={() => setShowMobileFilters(true)}
-                  className="lg:hidden flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded hover:border-gray-400 transition-colors text-sm"
-                >
-                  <Filter className="w-4 h-4" />
-                  Filters
-                  {activeFiltersCount > 0 && (
-                    <span className="bg-black text-white text-xs px-2 py-0.5 rounded-full">
-                      {activeFiltersCount}
-                    </span>
-                  )}
-                </button>
-
-                <SortDropdown
-                  value={filters.sortBy}
-                  onChange={(value) => updateFilter('sortBy', value)}
-                />
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            <SearchBar
-              value={filters.search}
-              onChange={(value) => updateFilter('search', value)}
+    <div className="min-h-screen bg-white font-sans text-black">
+      {/* Hero Section - Immersive & Minimal */}
+      {hero && (
+        <section className="relative h-[90vh] w-full overflow-hidden">
+          <div className="absolute inset-0">
+            <img
+              src={hero.image}
+              alt={hero.title}
+              className="w-full h-full object-cover object-center"
             />
-
-            {/* Active Filters */}
-            {activeFiltersCount > 0 && (
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-sm text-gray-500">Active filters:</span>
-                {filters.category !== 'All' && (
-                  <span className="inline-flex items-center gap-1 bg-black text-white px-3 py-1 rounded-full text-xs">
-                    {filters.category}
-                    <button onClick={() => updateFilter('category', 'All')}>
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {filters.brands.map(brand => (
-                  <span key={brand} className="inline-flex items-center gap-1 bg-black text-white px-3 py-1 rounded-full text-xs">
-                    {brand}
-                    <button onClick={() => updateFilter('brands', filters.brands.filter(b => b !== brand))}>
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-                {filters.search && (
-                  <span className="inline-flex items-center gap-1 bg-black text-white px-3 py-1 rounded-full text-xs">
-                    Search: "{filters.search}"
-                    <button onClick={() => updateFilter('search', '')}>
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                <button
-                  onClick={resetFilters}
-                  className="text-xs text-gray-500 hover:text-black transition-colors underline"
-                >
-                  Clear all
-                </button>
-              </div>
-            )}
+            {/* Subtle gradient overlay for better text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
           </div>
-
-          {/* Main Content: Filters + Products Grid */}
-          <div className="flex gap-8">
-            {/* Desktop Filters Sidebar */}
-            <aside className="hidden lg:block w-64 flex-shrink-0 space-y-6">
-              <CategoryFilter
-                selectedCategory={filters.category}
-                onCategoryChange={(category) => updateFilter('category', category)}
-              />
-
-              <div className="border-t border-gray-200 pt-6">
-                <BrandFilter
-                  selectedBrands={filters.brands}
-                  onBrandsChange={(brands) => updateFilter('brands', brands)}
-                />
-              </div>
-
-              <div className="border-t border-gray-200 pt-6">
-                <PriceRangeFilter
-                  minPrice={filters.minPrice}
-                  maxPrice={filters.maxPrice}
-                  onPriceChange={(min, max) => updateFilters({ minPrice: min, maxPrice: max })}
-                  absoluteMin={priceRange.min}
-                  absoluteMax={priceRange.max}
-                />
-              </div>
-
-              {activeFiltersCount > 0 && (
-                <button
-                  onClick={resetFilters}
-                  className="w-full py-2 text-sm text-gray-600 hover:text-black border border-gray-300 rounded hover:border-black transition-colors"
-                >
-                  Reset Filters
-                </button>
+          
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+            <div className="max-w-4xl space-y-6 animate-fade-in-up">
+              {hero.subtitle && (
+                <p className="text-white/90 text-sm md:text-base tracking-[0.4em] font-medium uppercase">
+                  {hero.subtitle}
+                </p>
               )}
-            </aside>
+              <h1 className="text-white text-5xl md:text-7xl lg:text-9xl font-bold tracking-tighter leading-none">
+                {hero.title}
+              </h1>
+              <div className="pt-8">
+                <Link
+                  to={hero.ctaLink}
+                  className="group relative inline-flex items-center justify-center px-8 py-4 bg-white text-black font-medium tracking-widest text-sm overflow-hidden transition-all duration-300 hover:bg-black hover:text-white"
+                >
+                  <span className="relative z-10">{hero.ctaText}</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
-            {/* Products Grid */}
-            <div className="flex-1">
-              {isLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                  <LoadingSkeleton variant="product-card" count={8} />
-                </div>
-              ) : filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                  {filteredProducts.map((product) => (
-                    <ProductCard
-                      key={product._id}
-                      product={product}
-                      isFavorite={favorites.includes(product.id)}
-                      onToggleFavorite={handleToggleFavorite}
+      {/* Marquee Section */}
+      {marquee && marquee.length > 0 && (
+        <section className="border-b border-gray-100">
+          <Marquee items={marquee} speed={40} />
+        </section>
+      )}
+
+      {categoryNav && (
+        <CategoryNav
+          categories={categoryNav}
+          autoScroll={true}
+          scrollSpeed={0.6}
+          pauseOnHover={true}
+          pauseOnTouch={true}
+          imageSize={120}
+          gap={56}
+          showEdgeFade={true}
+          centerOnDesktop={false}
+        />
+
+      )}
+
+      {/* Bento Grid - Banners Section */}
+      {banners && banners.length > 0 && (
+        <section className="py-16 md:py-24 px-4 md:px-8 max-w-[1920px] mx-auto">
+          {/* 
+            Grid Layout Strategy:
+            Mobile: Stacked (grid-cols-1)
+            Tablet/Desktop: 12-column grid
+            - Large Banner: Spans 7 columns
+            - Small Banners Stack: Spans 5 columns (stacked vertically)
+          */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 lg:min-h-[700px]">
+            
+            {/* Find Large Banner */}
+            {banners.find(b => b.type === 'large') && (() => {
+               const largeBanner = banners.find(b => b.type === 'large');
+               return (
+                <div className="lg:col-span-7 h-[500px] lg:h-auto relative group overflow-hidden bg-gray-100">
+                  <Link to={largeBanner.link} className="block w-full h-full">
+                    <img
+                      src={largeBanner.image}
+                      alt={largeBanner.title}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
                     />
-                  ))}
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
+                    <div className="absolute bottom-0 left-0 p-8 md:p-12 text-white w-full">
+                      {largeBanner.subtitle && (
+                        <span className="block text-sm tracking-widest mb-3 uppercase opacity-90">{largeBanner.subtitle}</span>
+                      )}
+                      <h2 className="text-3xl md:text-5xl font-bold mb-6 tracking-tight">{largeBanner.title}</h2>
+                      <span className="inline-flex items-center text-sm font-medium border-b border-white pb-1 group-hover:pl-2 transition-all duration-300">
+                        {largeBanner.ctaText} <ArrowRight className="w-4 h-4 ml-2" />
+                      </span>
+                    </div>
+                  </Link>
                 </div>
-              ) : (
-                <div className="text-center py-16">
-                  <p className="text-gray-500 text-lg mb-2">No products found</p>
-                  <p className="text-gray-400 text-sm mb-6">
-                    Try adjusting your filters or search query
-                  </p>
-                  <button
-                    onClick={resetFilters}
-                    className="px-6 py-2 bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors"
-                  >
-                    Clear Filters
-                  </button>
+               );
+            })()}
+
+            {/* Small Banners Column */}
+            <div className="lg:col-span-5 flex flex-col gap-4 md:gap-6 h-full min-h-[700px] lg:min-h-0">
+              {banners.filter(b => b.type === 'small').map((banner) => (
+                <div key={banner.id} className="relative flex-1 h-[300px] lg:h-auto group overflow-hidden bg-gray-100">
+                  <Link to={banner.link} className="block w-full h-full">
+                    <img
+                      src={banner.image}
+                      alt={banner.title}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
+                    <div className="absolute bottom-0 left-0 p-6 md:p-8 text-white w-full">
+                      <h3 className="text-2xl md:text-3xl font-bold mb-3 tracking-tight">{banner.title}</h3>
+                      <span className="text-xs md:text-sm tracking-widest uppercase opacity-90 border-b border-transparent group-hover:border-white pb-1 transition-all">
+                        {banner.ctaText}
+                      </span>
+                    </div>
+                  </Link>
                 </div>
-              )}
+              ))}
             </div>
           </div>
+        </section>
+      )}
+
+      {featured && (
+        <div className="relative z-10 bg-white">
+          <FeaturedSection data={featured} />
         </div>
-      </section>
+      )}
 
-      {/* Mobile Filters Drawer */}
-      {showMobileFilters && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowMobileFilters(false)} />
-          <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-white overflow-y-auto">
-            <div className="p-6 space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold">Filters</h3>
-                <button onClick={() => setShowMobileFilters(false)}>
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+      {/* Testimonials Section */}
+      {testimonials && (
+        <Testimonials testimonials={testimonials} />
+      )}
 
-              <CategoryFilter
-                selectedCategory={filters.category}
-                onCategoryChange={(category) => updateFilter('category', category)}
+      {/* Newsletter - Minimal */}
+      {newsletter && (
+        <section className="py-24 px-4 md:px-8 bg-white border-t border-gray-100">
+          <div className="max-w-xl mx-auto text-center space-y-8">
+            <h2 className="text-3xl font-bold tracking-tight">{newsletter.title}</h2>
+            <p className="text-gray-500 leading-relaxed">
+              {newsletter.description}
+            </p>
+            <form className="flex flex-col sm:flex-row gap-3">
+              <input 
+                type="email" 
+                placeholder="Email address" 
+                className="flex-1 px-4 py-4 bg-gray-50 border-none focus:ring-1 focus:ring-black placeholder:text-gray-400 text-sm w-full"
               />
-
-              <div className="border-t border-gray-200 pt-6">
-                <BrandFilter
-                  selectedBrands={filters.brands}
-                  onBrandsChange={(brands) => updateFilter('brands', brands)}
-                />
-              </div>
-
-              <div className="border-t border-gray-200 pt-6">
-                <PriceRangeFilter
-                  minPrice={filters.minPrice}
-                  maxPrice={filters.maxPrice}
-                  onPriceChange={(min, max) => updateFilters({ minPrice: min, maxPrice: max })}
-                  absoluteMin={priceRange.min}
-                  absoluteMax={priceRange.max}
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={resetFilters}
-                  className="flex-1 py-3 text-sm border border-gray-300 rounded hover:border-black transition-colors"
-                >
-                  Reset
-                </button>
-                <button
-                  onClick={() => setShowMobileFilters(false)}
-                  className="flex-1 py-3 text-sm bg-black text-white rounded hover:bg-gray-800 transition-colors"
-                >
-                  Apply
-                </button>
-              </div>
-            </div>
+              <button className="bg-black text-white px-8 py-4 text-sm font-bold tracking-widest hover:bg-gray-900 transition-all w-full sm:w-auto">
+                SUBSCRIBE
+              </button>
+            </form>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
