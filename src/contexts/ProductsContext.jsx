@@ -76,7 +76,11 @@ export const ProductsProvider = ({ children }) => {
 
   // Fetch products when filters change
   useEffect(() => {
-    fetchProducts();
+    const timer = setTimeout(() => {
+      fetchProducts();
+    }, 1500);
+
+    return () => clearTimeout(timer);
   }, [filters.category, filters.brands, filters.minPrice, filters.maxPrice, filters.search, filters.sortBy, filters.page]);
 
   // Update filter
