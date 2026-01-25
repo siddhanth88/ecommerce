@@ -137,6 +137,8 @@ const ProductDetail = () => {
                 ? [...product.imageDataArray, ...(product.images || [])]
                 : (product.images && product.images.length > 0 ? product.images : ['https://via.placeholder.com/600x600?text=No+Image'])}
               productName={product.name}
+              isFavorite={isFavorite}
+              onToggleFavorite={handleToggleFavorite}
             />
           </div>
 
