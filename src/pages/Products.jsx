@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProducts } from '../contexts/ProductsContext';
 import ProductCard from '../components/product/ProductCard';
 import SearchBar from '../components/filters/SearchBar';
@@ -6,22 +6,27 @@ import SortDropdown from '../components/filters/SortDropdown';
 import CategoryFilter, { BrandFilter } from '../components/filters/CategoryFilter';
 import PriceRangeFilter from '../components/filters/PriceRangeFilter';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
 const Products = () => {
-  const { 
-    filteredProducts, 
-    filters, 
-    updateFilter, 
+  const {
+    filteredProducts,
+    filters,
+    updateFilter,
     updateFilters,
     resetFilters,
-    priceRange 
+    priceRange,
+    pagination
   } = useProducts();
 
   const [favorites, setFavorites] = useLocalStorage('favorites', []);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [filters.page]);
 
   const handleToggleFavorite = (productId) => {
     setFavorites(prev => {
@@ -32,7 +37,7 @@ const Products = () => {
     });
   };
 
-  const activeFiltersCount = 
+  const activeFiltersCount =
     (filters.category !== 'All' ? 1 : 0) +
     filters.brands.length +
     (filters.search ? 1 : 0) +
@@ -169,7 +174,7 @@ const Products = () => {
                     <ProductCard
                       key={product._id}
                       product={product}
-                      isFavorite={favorites.includes(product.id)}
+                      isFavorite={favorites.includes(product._id)}
                       onToggleFavorite={handleToggleFavorite}
                     />
                   ))}
@@ -185,6 +190,43 @@ const Products = () => {
                     className="px-6 py-2 bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors"
                   >
                     Clear Filters
+                  </button>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {pagination.pages > 1 && (
+                <div className="mt-12 flex justify-center items-center gap-2">
+                  <button
+                    onClick={() => updateFilter('page', pagination.page - 1)}
+                    disabled={pagination.page === 1}
+                    className="p-2 border border-gray-300 rounded hover:border-black disabled:opacity-50 disabled:hover:border-gray-300 transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+
+                  {[...Array(pagination.pages)].map((_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => updateFilter('page', pageNum)}
+                        className={`w-10 h-10 border rounded text-sm font-medium transition-colors ${pagination.page === pageNum
+                          ? 'bg-black text-white border-black'
+                          : 'border-gray-300 hover:border-black'
+                          }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    onClick={() => updateFilter('page', pagination.page + 1)}
+                    disabled={pagination.page === pagination.pages}
+                    className="p-2 border border-gray-300 rounded hover:border-black disabled:opacity-50 disabled:hover:border-gray-300 transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
                   </button>
                 </div>
               )}

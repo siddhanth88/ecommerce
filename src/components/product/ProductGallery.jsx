@@ -26,9 +26,8 @@ const ProductGallery = ({ images, productName }) => {
         <img
           src={images[selectedImage]}
           alt={`${productName} - Image ${selectedImage + 1}`}
-          className={`w-full h-full object-cover transition-transform duration-300 ${
-            isZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'
-          }`}
+          className={`w-full h-full object-cover transition-transform duration-300 ${isZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'
+            }`}
           onClick={() => setIsZoomed(!isZoomed)}
         />
 
@@ -67,11 +66,10 @@ const ProductGallery = ({ images, productName }) => {
             <button
               key={index}
               onClick={() => setSelectedImage(index)}
-              className={`aspect-square bg-gray-50 overflow-hidden border-2 transition-all ${
-                selectedImage === index
-                  ? 'border-black'
+              className={`aspect-square bg-gray-50 rounded-md overflow-hidden border-2 transition-all duration-200 ${selectedImage === index
+                  ? 'border-black ring-2 ring-black ring-offset-2'
                   : 'border-transparent hover:border-gray-300'
-              }`}
+                }`}
             >
               <img
                 src={image}

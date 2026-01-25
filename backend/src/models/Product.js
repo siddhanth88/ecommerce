@@ -32,7 +32,7 @@ const productSchema = new mongoose.Schema({
   },
   images: {
     type: [String],
-    required: [true, 'Please provide at least one image']
+    default: []
   },
   sizes: {
     type: [String],
@@ -74,7 +74,11 @@ const productSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
-  }
+  },
+  imagesData: [{
+    buffer: Buffer,
+    contentType: String
+  }]
 }, {
   timestamps: true
 });

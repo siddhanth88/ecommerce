@@ -57,13 +57,19 @@ export const productService = {
 
   // Create product (Admin only)
   create: async (productData) => {
-    const response = await api.post('/products', productData);
+    const config = productData instanceof FormData 
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : {};
+    const response = await api.post('/products', productData, config);
     return response.data;
   },
 
   // Update product (Admin only)
   update: async (id, productData) => {
-    const response = await api.put(`/products/${id}`, productData);
+    const config = productData instanceof FormData 
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : {};
+    const response = await api.put(`/products/${id}`, productData, config);
     return response.data;
   },
 

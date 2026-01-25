@@ -46,29 +46,29 @@ const Dashboard = () => {
   return (
     <AdminLayout>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard 
-          title="Total Sales" 
-          value={formatPrice(stats.totalSales)} 
-          icon={DollarSign} 
-          color="bg-green-500" 
+        <StatCard
+          title="Total Sales"
+          value={formatPrice(stats.totalSales)}
+          icon={DollarSign}
+          color="bg-green-500"
         />
-        <StatCard 
-          title="Total Orders" 
-          value={stats.totalOrders} 
-          icon={Package} 
-          color="bg-blue-500" 
+        <StatCard
+          title="Total Orders"
+          value={stats.totalOrders}
+          icon={Package}
+          color="bg-blue-500"
         />
-        <StatCard 
-          title="Total Products" 
-          value={stats.totalProducts} 
-          icon={ShoppingBag} 
-          color="bg-purple-500" 
+        <StatCard
+          title="Total Products"
+          value={stats.totalProducts}
+          icon={ShoppingBag}
+          color="bg-purple-500"
         />
-        <StatCard 
-          title="Total Users" 
-          value={stats.totalUsers} 
-          icon={UsersIcon} 
-          color="bg-orange-500" 
+        <StatCard
+          title="Total Users"
+          value={stats.totalUsers}
+          icon={UsersIcon}
+          color="bg-orange-500"
         />
       </div>
 
@@ -88,11 +88,10 @@ const Dashboard = () => {
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-gray-900">{formatPrice(order.total)}</p>
-                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                      order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${order.status === 'delivered' ? 'bg-green-100 text-green-800' :
                       order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
                       {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                     </span>
                   </div>
@@ -112,10 +111,10 @@ const Dashboard = () => {
           <div className="divide-y divide-gray-100">
             {stats.topProducts.map((product) => (
               <div key={product._id} className="px-6 py-4 flex items-center space-x-4">
-                <img 
-                  src={product.images[0]} 
-                  alt={product.name} 
-                  className="w-12 h-12 rounded object-cover" 
+                <img
+                  src={(product.imageDataArray && product.imageDataArray[0]) || (product.images && product.images[0]) || 'https://via.placeholder.com/50x50?text=No+Image'}
+                  alt={product.name}
+                  className="w-12 h-12 rounded object-cover"
                 />
                 <div className="flex-1">
                   <p className="font-medium text-gray-900 line-clamp-1">{product.name}</p>

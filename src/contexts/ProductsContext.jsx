@@ -21,6 +21,11 @@ export const ProductsProvider = ({ children }) => {
   const [homeConfig, setHomeConfig] = useState(productsData.home || {});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    pages: 1
+  });
 
   // Filters state
   const [filters, setFilters] = useState({
@@ -43,21 +48,26 @@ export const ProductsProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       const data = await productService.getAll(filters);
-      
+
       setFilteredProducts(data.products || []);
-      
+      setPagination({
+        total: data.total || 0,
+        page: data.page || 1,
+        pages: data.pages || 1
+      });
+
       // If it's the first load, also set all products for price range calculation
       if (products.length === 0) {
         const allData = await productService.getAll({ limit: 1000 });
         setProducts(allData.products || []);
-        
+
         // Calculate price range
         if (allData.products && allData.products.length > 0) {
           const prices = allData.products.map(p => p.price);
           const min = Math.floor(Math.min(...prices));
           const max = Math.ceil(Math.max(...prices));
           setPriceRange({ min, max });
-          
+
           // Update filters with actual price range
           setFilters(prev => ({
             ...prev,
@@ -78,7 +88,7 @@ export const ProductsProvider = ({ children }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchProducts();
-    }, 1500);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [filters.category, filters.brands, filters.minPrice, filters.maxPrice, filters.search, filters.sortBy, filters.page]);
@@ -88,7 +98,7 @@ export const ProductsProvider = ({ children }) => {
     setFilters(prev => ({
       ...prev,
       [filterName]: value,
-      page: filterName !== 'page' ? 1 : prev.page // Reset to page 1 when filter changes
+      page: filterName === 'page' ? value : 1
     }));
   };
 
@@ -120,7 +130,7 @@ export const ProductsProvider = ({ children }) => {
     // First try to find in current products
     const product = products.find(product => product._id === id || product.id === id);
     if (product) return product;
-    
+
     // If not found, try in filtered products
     return filteredProducts.find(product => product._id === id || product.id === id);
   };
@@ -157,6 +167,7 @@ export const ProductsProvider = ({ children }) => {
     priceRange,
     loading,
     error,
+    pagination,
     updateFilter,
     updateFilters,
     resetFilters,

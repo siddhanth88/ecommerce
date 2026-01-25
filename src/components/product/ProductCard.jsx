@@ -18,11 +18,11 @@ const ProductCard = ({ product, isFavorite = false, onToggleFavorite }) => {
   const handleQuickAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // For products with only one size/color, add directly
     const defaultSize = product.sizes.length === 1 ? product.sizes[0] : null;
     const defaultColor = product.colors.length === 1 ? product.colors[0] : null;
-    
+
     if (product.sizes.length > 1 || product.colors.length > 1) {
       // Navigate to product detail for selection
       navigate(`/product/${product._id}`);
@@ -46,7 +46,7 @@ const ProductCard = ({ product, isFavorite = false, onToggleFavorite }) => {
         <div className="overflow-hidden bg-gray-50 aspect-[3/4] mb-3 relative">
           <Link to={`/product/${product._id}`}>
             <img
-              src={product.images[0]}
+              src={(product.imageDataArray && product.imageDataArray[0]) || (product.images && product.images[0]) || 'https://via.placeholder.com/300x400?text=No+Image'}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               loading="lazy"
@@ -113,9 +113,8 @@ const ProductCard = ({ product, isFavorite = false, onToggleFavorite }) => {
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
             <Heart
-              className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
-                isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'
-              }`}
+              className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'
+                }`}
             />
           </button>
         </div>

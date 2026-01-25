@@ -18,6 +18,9 @@ export const getProducts = async (req, res, next) => {
       limit = 12
     } = req.query;
 
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+
     // Build query
     let query = { isActive: true };
 
@@ -67,12 +70,12 @@ export const getProducts = async (req, res, next) => {
     }
 
     // Pagination
-    const skip = (page - 1) * limit;
+    const skip = (pageNum - 1) * limitNum;
 
     // Execute query
     const products = await Product.find(query)
       .sort(sortOptions)
-      .limit(Number(limit))
+      .limit(limitNum)
       .skip(skip);
 
     // Get total count for pagination
@@ -84,7 +87,15 @@ export const getProducts = async (req, res, next) => {
       total,
       page: Number(page),
       pages: Math.ceil(total / limit),
-      products
+      products: products.map(product => {
+        const productObj = product.toObject();
+        if (product.imagesData && product.imagesData.length > 0) {
+          productObj.imageDataArray = product.imagesData.map(img => 
+            `data:${img.contentType};base64,${img.buffer.toString('base64')}`
+          );
+        }
+        return productObj;
+      })
     });
   } catch (error) {
     next(error);
@@ -107,9 +118,16 @@ export const getProduct = async (req, res, next) => {
       });
     }
 
+    const productObj = product.toObject();
+    if (product.imagesData && product.imagesData.length > 0) {
+      productObj.imageDataArray = product.imagesData.map(img => 
+        `data:${img.contentType};base64,${img.buffer.toString('base64')}`
+      );
+    }
+
     res.status(200).json({
       success: true,
-      product
+      product: productObj
     });
   } catch (error) {
     next(error);
@@ -131,7 +149,15 @@ export const getProductsByCategory = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: products.length,
-      products
+      products: products.map(product => {
+        const productObj = product.toObject();
+        if (product.imagesData && product.imagesData.length > 0) {
+          productObj.imageDataArray = product.imagesData.map(img => 
+            `data:${img.contentType};base64,${img.buffer.toString('base64')}`
+          );
+        }
+        return productObj;
+      })
     });
   } catch (error) {
     next(error);
@@ -162,7 +188,15 @@ export const searchProducts = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: products.length,
-      products
+      products: products.map(product => {
+        const productObj = product.toObject();
+        if (product.imagesData && product.imagesData.length > 0) {
+          productObj.imageDataArray = product.imagesData.map(img => 
+            `data:${img.contentType};base64,${img.buffer.toString('base64')}`
+          );
+        }
+        return productObj;
+      })
     });
   } catch (error) {
     next(error);
@@ -176,7 +210,16 @@ export const searchProducts = async (req, res, next) => {
  */
 export const createProduct = async (req, res, next) => {
   try {
-    const product = await Product.create(req.body);
+    const productData = { ...req.body };
+    
+    if (req.files && req.files.length > 0) {
+      productData.imagesData = req.files.map(file => ({
+        buffer: file.buffer,
+        contentType: file.mimetype
+      }));
+    }
+
+    const product = await Product.create(productData);
 
     res.status(201).json({
       success: true,
@@ -203,7 +246,15 @@ export const updateProduct = async (req, res, next) => {
       });
     }
 
-    product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    const updateData = { ...req.body };
+    if (req.files && req.files.length > 0) {
+      updateData.imagesData = req.files.map(file => ({
+        buffer: file.buffer,
+        contentType: file.mimetype
+      }));
+    }
+
+    product = await Product.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true
     });

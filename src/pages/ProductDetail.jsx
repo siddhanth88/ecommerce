@@ -37,7 +37,7 @@ const ProductDetail = () => {
       try {
         // Try to get from context first
         let foundProduct = getProductById(id);
-        
+
         // If not in context, fetch from API
         if (!foundProduct) {
           try {
@@ -53,7 +53,7 @@ const ProductDetail = () => {
         if (foundProduct) {
           setProduct(foundProduct);
           setRelatedProducts(getRelatedProducts(id));
-          
+
           // Set default selections if only one option
           if (foundProduct.sizes.length === 1) {
             setSelectedSize(foundProduct.sizes[0]);
@@ -93,10 +93,10 @@ const ProductDetail = () => {
 
   const handleToggleFavorite = () => {
     setFavorites(prev => {
-      if (prev.includes(product.id)) {
-        return prev.filter(id => id !== product.id);
+      if (prev.includes(product._id)) {
+        return prev.filter(id => id !== product._id);
       }
-      return [...prev, product.id];
+      return [...prev, product._id];
     });
   };
 
@@ -108,7 +108,7 @@ const ProductDetail = () => {
     );
   }
 
-  const isFavorite = favorites.includes(product.id);
+  const isFavorite = favorites.includes(product._id);
 
   return (
     <div className="min-h-screen bg-white">
@@ -132,7 +132,12 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Gallery */}
           <div>
-            <ProductGallery images={product.images} productName={product.name} />
+            <ProductGallery
+              images={(product.imageDataArray && product.imageDataArray.length > 0)
+                ? [...product.imageDataArray, ...(product.images || [])]
+                : (product.images && product.images.length > 0 ? product.images : ['https://via.placeholder.com/600x600?text=No+Image'])}
+              productName={product.name}
+            />
           </div>
 
           {/* Product Info */}
@@ -150,11 +155,10 @@ const ProductDetail = () => {
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.floor(product.rating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
+                      className={`w-4 h-4 ${i < Math.floor(product.rating)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-gray-300'
+                        }`}
                     />
                   ))}
                 </div>
@@ -239,9 +243,8 @@ const ProductDetail = () => {
                 aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
                 <Heart
-                  className={`w-6 h-6 ${
-                    isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'
-                  }`}
+                  className={`w-6 h-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                    }`}
                 />
               </button>
               <button
@@ -287,11 +290,10 @@ const ProductDetail = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`py-4 text-sm font-medium capitalize transition-colors ${
-                  activeTab === tab
-                    ? 'border-b-2 border-black text-black'
-                    : 'text-gray-500 hover:text-black'
-                }`}
+                className={`py-4 text-sm font-medium capitalize transition-colors ${activeTab === tab
+                  ? 'border-b-2 border-black text-black'
+                  : 'text-gray-500 hover:text-black'
+                  }`}
               >
                 {tab}
               </button>
@@ -348,15 +350,15 @@ const ProductDetail = () => {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {relatedProducts.map((relatedProduct) => (
                 <ProductCard
-                  key={relatedProduct.id}
+                  key={relatedProduct._id}
                   product={relatedProduct}
-                  isFavorite={favorites.includes(relatedProduct.id)}
+                  isFavorite={favorites.includes(relatedProduct._id)}
                   onToggleFavorite={() => {
                     setFavorites(prev => {
-                      if (prev.includes(relatedProduct.id)) {
-                        return prev.filter(id => id !== relatedProduct.id);
+                      if (prev.includes(relatedProduct._id)) {
+                        return prev.filter(id => id !== relatedProduct._id);
                       }
-                      return [...prev, relatedProduct.id];
+                      return [...prev, relatedProduct._id];
                     });
                   }}
                 />
