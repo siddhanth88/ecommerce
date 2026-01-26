@@ -80,7 +80,7 @@ const ProductForm = () => {
   };
 
   const addArrayItem = (field) => {
-    setFormData(prev => ({ ...prev, [field]: [...prev[field], ''] }));
+    setFormData(prev => ({ ...prev, [field]: [...prev[field], '#000000'] }));
   };
 
   const removeArrayItem = (index, field) => {
