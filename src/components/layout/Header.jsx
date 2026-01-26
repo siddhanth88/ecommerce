@@ -4,6 +4,7 @@ import { ShoppingBag, Search, User, Menu, X, Heart, LogOut, Package } from 'luci
 import { useCart } from '../../contexts/CartContext';
 import { useProducts } from '../../contexts/ProductsContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useWishlist } from '../../contexts/WishlistContext';
 import CartDrawer from '../cart/CartDrawer';
 
 const Header = () => {
@@ -13,6 +14,7 @@ const Header = () => {
   const { itemCount } = useCart();
   const { updateFilter, config } = useProducts();
   const { user, logout } = useAuth();
+  const { wishlistIds } = useWishlist();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -65,9 +67,9 @@ const Header = () => {
             {/* Center Logo */}
             <Link to="/" className="absolute left-1/2 transform -translate-x-1/2">
               {config.logo ? (
-                <img 
-                  src={config.logo} 
-                  alt={config.storeName} 
+                <img
+                  src={config.logo}
+                  alt={config.storeName}
                   className="h-8 md:h-10 object-contain"
                 />
               ) : (
@@ -84,6 +86,18 @@ const Header = () => {
               >
                 <Search className="w-5 h-5" />
               </button>
+              <Link
+                to="/wishlist"
+                className="p-2 hover:bg-gray-50 rounded-full relative"
+                aria-label="Wishlist"
+              >
+                <Heart className="w-5 h-5" />
+                {wishlistIds.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-black text-white text-xs rounded-full flex items-center justify-center font-medium">
+                    {wishlistIds.length}
+                  </span>
+                )}
+              </Link>
               <button
                 onClick={() => setCartOpen(true)}
                 className="p-2 hover:bg-gray-50 rounded-full relative"
@@ -99,8 +113,8 @@ const Header = () => {
               {user ? (
                 <div className="hidden md:flex items-center space-x-2">
                   <span className="text-sm text-black">Hi, {user.name.split(' ')[0]}</span>
-                  <Link 
-                    to="/my-orders" 
+                  <Link
+                    to="/my-orders"
                     className="p-2 hover:bg-gray-50 rounded-full transition-colors"
                     aria-label="My Orders"
                     title="My Orders"
@@ -197,6 +211,13 @@ const Header = () => {
                   My Orders
                 </Link>
               )}
+              <Link
+                to="/wishlist"
+                onClick={() => setMenuOpen(false)}
+                className="block text-xl font-medium hover:text-gray-600 py-2"
+              >
+                My Wishlist
+              </Link>
             </nav>
 
             <div className="mt-12 pt-8 border-t border-gray-100">

@@ -29,11 +29,21 @@ export const CartProvider = ({ children }) => {
   const addToCart = (product, selectedSize, selectedColor) => {
     // Validation
     if (!selectedSize && product.sizes.length > 1) {
+      console.warn('AddToCart Validation Failed: Missing Size', {
+        required: product.sizes.length > 1,
+        selected: selectedSize,
+        available: product.sizes
+      });
       showToast('Please select a size', 'error');
       return false;
     }
 
     if (!selectedColor && product.colors.length > 1) {
+      console.warn('AddToCart Validation Failed: Missing Color', {
+        required: product.colors.length > 1,
+        selected: selectedColor,
+        available: product.colors
+      });
       showToast('Please select a color', 'error');
       return false;
     }
@@ -41,9 +51,9 @@ export const CartProvider = ({ children }) => {
     setCartItems(prev => {
       // Check if item with same size and color already exists
       const existingIndex = prev.findIndex(
-        item => 
-          (item._id === product._id || item.id === product.id) && 
-          item.selectedSize === selectedSize && 
+        item =>
+          (item._id === product._id || item.id === product.id) &&
+          item.selectedSize === selectedSize &&
           item.selectedColor === selectedColor
       );
 
@@ -110,7 +120,7 @@ export const CartProvider = ({ children }) => {
   const placeOrder = async (shippingData) => {
     try {
       setLoading(true);
-      
+
       // Filter out stale items (invalid IDs)
       const validItems = cartItems.filter(item => {
         const id = item._id || item.id;
@@ -139,7 +149,7 @@ export const CartProvider = ({ children }) => {
 
       const currentSubtotal = validItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       const currentTax = currentSubtotal * taxRate;
-      
+
       const orderPayload = {
         items: orderItems,
         shippingAddress: shippingData.shippingAddress,
@@ -150,7 +160,7 @@ export const CartProvider = ({ children }) => {
       };
 
       const response = await orderService.create(orderPayload);
-      
+
       clearCart();
       showToast('Order placed successfully!', 'success');
       return { success: true, order: response.order };

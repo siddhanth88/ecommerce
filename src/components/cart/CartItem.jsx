@@ -34,9 +34,14 @@ const CartItem = ({ item }) => {
   return (
     <div className="flex gap-4 py-4 border-b border-gray-100">
       {/* Product Image */}
-      <div className="w-20 sm:w-24 h-28 sm:h-32 bg-gray-50 flex-shrink-0">
+      <div className="w-20 sm:w-24 h-28 sm:h-32 bg-gray-50 flex-shrink-0 overflow-hidden">
         <img
-          src={item.images[0]}
+          src={
+            (item.imageDataArray && item.imageDataArray[0]) ||
+            (item.images && item.images[0]) ||
+            (item.image) ||
+            'https://via.placeholder.com/300x400?text=No+Image'
+          }
           alt={item.name}
           className="w-full h-full object-cover"
         />

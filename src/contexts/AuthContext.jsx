@@ -13,6 +13,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -21,7 +22,9 @@ export const AuthProvider = ({ children }) => {
     const loadUser = () => {
       try {
         const currentUser = authService.getCurrentUser();
+        const currentToken = localStorage.getItem('token');
         setUser(currentUser);
+        setToken(currentToken);
       } catch (err) {
         console.error('Error loading user:', err);
       } finally {
@@ -39,6 +42,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const data = await authService.register(userData);
       setUser(data.user);
+      setToken(data.token);
       return { success: true, data };
     } catch (err) {
       const errorMessage = err.response?.data?.error || 'Registration failed';
@@ -56,6 +60,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const data = await authService.login(credentials);
       setUser(data.user);
+      setToken(data.token);
       return { success: true, data };
     } catch (err) {
       const errorMessage = err.response?.data?.error || 'Login failed';
@@ -71,6 +76,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await authService.logout();
       setUser(null);
+      setToken(null);
     } catch (err) {
       console.error('Logout error:', err);
     }
@@ -78,7 +84,7 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is authenticated
   const isAuthenticated = () => {
-    return !!user;
+    return !!token;
   };
 
   // Check if user is admin
@@ -88,6 +94,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    token,
     loading,
     error,
     register,

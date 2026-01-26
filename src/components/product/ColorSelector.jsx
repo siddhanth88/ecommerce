@@ -9,22 +9,17 @@ import React from 'react';
  * @param {Function} props.onSelectColor - Color selection handler
  * @param {boolean} props.error - Error state
  */
-const ColorSelector = ({ 
-  colors, 
-  colorNames = [], 
-  selectedColor, 
+const ColorSelector = ({
+  colors,
+  colorNames = [],
+  selectedColor,
   onSelectColor,
-  error = false 
+  error = false
 }) => {
   return (
     <div className="space-y-3">
       <label className="text-sm font-medium">
         Color {error && <span className="text-red-500">*</span>}
-        {selectedColor && colorNames.length > 0 && (
-          <span className="ml-2 text-gray-500 font-normal">
-            - {colorNames[colors.indexOf(selectedColor)]}
-          </span>
-        )}
       </label>
 
       <div className="flex flex-wrap gap-3">
@@ -34,11 +29,14 @@ const ColorSelector = ({
 
           return (
             <button
-              key={color}
-              onClick={() => onSelectColor(color)}
-              className={`w-10 h-10 rounded-full border-2 transition-all relative group ${
-                isSelected ? 'border-black scale-110' : 'border-gray-300 hover:border-gray-400'
-              } ${error && !selectedColor ? 'ring-2 ring-red-500' : ''}`}
+              key={`${color}-${index}`}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                onSelectColor(color);
+              }}
+              className={`w-10 h-10 rounded-full border-2 transition-all relative group ${isSelected ? 'border-black scale-110' : 'border-gray-300 hover:border-gray-400'
+                } ${error && !selectedColor ? 'ring-2 ring-red-500' : ''}`}
               style={{ backgroundColor: color }}
               title={colorName}
               aria-label={`Select ${colorName} color`}
@@ -46,7 +44,7 @@ const ColorSelector = ({
               {/* Checkmark for selected */}
               {isSelected && (
                 <svg
-                  className="w-5 h-5 absolute inset-0 m-auto"
+                  className="w-5 h-5 absolute inset-0 m-auto pointer-events-none"
                   fill={color === '#FFFFFF' || color === '#ffffff' ? '#000' : '#fff'}
                   viewBox="0 0 20 20"
                 >

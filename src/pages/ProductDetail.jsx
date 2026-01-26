@@ -4,6 +4,8 @@ import { ChevronRight, Star, Heart, Share2, Truck, RotateCcw } from 'lucide-reac
 import { useProducts } from '../contexts/ProductsContext';
 import productService from '../services/productService';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useWishlist } from '../contexts/WishlistContext';
 import { formatPrice } from '../utils/formatPrice';
 import ProductGallery from '../components/product/ProductGallery';
 import SizeSelector from '../components/product/SizeSelector';
@@ -19,6 +21,8 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { getProductById, getRelatedProducts } = useProducts();
   const { addToCart } = useCart();
+  const { user } = useAuth();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -28,17 +32,14 @@ const ProductDetail = () => {
   const [activeTab, setActiveTab] = useState('description');
   const [isLoading, setIsLoading] = useState(false);
   const [showError, setShowError] = useState(false);
-  const [favorites, setFavorites] = useLocalStorage('favorites', []);
   const [recentlyViewed, setRecentlyViewed] = useLocalStorage('recentlyViewed', []);
 
   useEffect(() => {
     const fetchProduct = async () => {
       setIsLoading(true);
       try {
-        // Try to get from context first
         let foundProduct = getProductById(id);
 
-        // If not in context, fetch from API
         if (!foundProduct) {
           try {
             const data = await productService.getById(id);
@@ -54,7 +55,6 @@ const ProductDetail = () => {
           setProduct(foundProduct);
           setRelatedProducts(getRelatedProducts(id));
 
-          // Set default selections if only one option
           if (foundProduct.sizes.length === 1) {
             setSelectedSize(foundProduct.sizes[0]);
           }
@@ -62,7 +62,6 @@ const ProductDetail = () => {
             setSelectedColor(foundProduct.colors[0]);
           }
 
-          // Add to recently viewed
           setRecentlyViewed(prev => {
             if (!prev) return [id];
             const filtered = prev.filter(pid => pid !== id);
@@ -79,25 +78,40 @@ const ProductDetail = () => {
     fetchProduct();
   }, [id, getProductById, getRelatedProducts, navigate, setRecentlyViewed]);
 
+  // Handlers to update selections
+  const handleSizeSelect = (size) => {
+    console.log('[ProductDetail] Size selected:', size, '| Current showError:', showError);
+    setSelectedSize(size);
+  };
+
+  const handleColorSelect = (color) => {
+    console.log('[ProductDetail] Color selected:', color, '| Current showError:', showError);
+    setSelectedColor(color);
+  };
+
+  // Debug: Log when selectedColor or showError changes
+  useEffect(() => {
+    console.log('[ProductDetail] State changed - selectedColor:', selectedColor, '| showError:', showError, '| Should show error:', showError && !selectedColor);
+  }, [selectedColor, showError]);
 
   const handleAddToCart = () => {
     setShowError(false);
+    console.log('Adding to cart:', { product: product.name, selectedSize, selectedColor });
     const success = addToCart(product, selectedSize, selectedColor);
     if (!success) {
+      console.log('Add to cart failed');
       setShowError(true);
     } else {
-      // Reset selections for next add
       setQuantity(1);
     }
   };
 
+  const isFavorite = product ? isInWishlist(product._id) : false;
+
   const handleToggleFavorite = () => {
-    setFavorites(prev => {
-      if (prev.includes(product._id)) {
-        return prev.filter(id => id !== product._id);
-      }
-      return [...prev, product._id];
-    });
+    if (product) {
+      toggleWishlist(product._id);
+    }
   };
 
   if (isLoading || !product) {
@@ -108,29 +122,20 @@ const ProductDetail = () => {
     );
   }
 
-  const isFavorite = favorites.includes(product._id);
-
   return (
     <div className="min-h-screen bg-white">
-      {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <nav className="flex items-center gap-2 text-sm text-gray-500">
-          <Link to="/" className="hover:text-black transition-colors">
-            Home
-          </Link>
+          <Link to="/" className="hover:text-black transition-colors">Home</Link>
           <ChevronRight className="w-4 h-4" />
-          <Link to="/" className="hover:text-black transition-colors">
-            {product.category}
-          </Link>
+          <Link to="/" className="hover:text-black transition-colors">{product.category}</Link>
           <ChevronRight className="w-4 h-4" />
           <span className="text-black">{product.name}</span>
         </nav>
       </div>
 
-      {/* Product Detail */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Product Gallery */}
           <div>
             <ProductGallery
               images={(product.imageDataArray && product.imageDataArray.length > 0)
@@ -142,93 +147,72 @@ const ProductDetail = () => {
             />
           </div>
 
-          {/* Product Info */}
           <div className="space-y-6">
-            {/* Brand and Name */}
             <div>
               <p className="text-sm text-gray-500 mb-1">{product.brand}</p>
               <h1 className="text-3xl sm:text-4xl font-bold">{product.name}</h1>
             </div>
 
-            {/* Rating and Reviews */}
             {product.rating && (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-4 h-4 ${i < Math.floor(product.rating)
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
-                        }`}
+                      className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
                     />
                   ))}
                 </div>
-                <span className="text-sm text-gray-600">
-                  {product.rating} ({product.reviews} reviews)
-                </span>
+                <span className="text-sm text-gray-600">{product.rating} ({product.reviews} reviews)</span>
               </div>
             )}
 
-            {/* Price */}
             <div className="flex items-center gap-3">
               <p className="text-3xl font-bold">{formatPrice(product.price)}</p>
               {product.originalPrice && (
                 <>
-                  <p className="text-xl text-gray-400 line-through">
-                    {formatPrice(product.originalPrice)}
-                  </p>
-                  <span className="bg-red-500 text-white px-2 py-1 text-sm font-medium">
-                    -{product.discount}%
-                  </span>
+                  <p className="text-xl text-gray-400 line-through">{formatPrice(product.originalPrice)}</p>
+                  <span className="bg-red-500 text-white px-2 py-1 text-sm font-medium">-{product.discount}%</span>
                 </>
               )}
             </div>
 
-            {/* Stock Status */}
             <div>
               {product.stock > 0 ? (
-                <p className="text-sm text-green-600 font-medium">
-                  ✓ In Stock ({product.stock} available)
-                </p>
+                <p className="text-sm text-green-600 font-medium">✓ In Stock ({product.stock} available)</p>
               ) : (
                 <p className="text-sm text-red-600 font-medium">Out of Stock</p>
               )}
             </div>
 
-            {/* Description */}
             <p className="text-gray-600 leading-relaxed">{product.description}</p>
 
-            {/* Size Selector */}
             {product.sizes.length > 1 && (
               <SizeSelector
                 sizes={product.sizes}
                 selectedSize={selectedSize}
-                onSelectSize={setSelectedSize}
+                onSelectSize={handleSizeSelect}
                 stock={product.stock}
                 error={showError && !selectedSize}
               />
             )}
 
-            {/* Color Selector */}
             {product.colors.length > 1 && (
               <ColorSelector
                 colors={product.colors}
-                colorNames={product.colorNames}
+                colorNames={product.colorNames || []}
                 selectedColor={selectedColor}
-                onSelectColor={setSelectedColor}
+                onSelectColor={handleColorSelect}
                 error={showError && !selectedColor}
               />
             )}
 
-            {/* Quantity Selector */}
             <QuantitySelector
               quantity={quantity}
               onQuantityChange={setQuantity}
               stock={product.stock}
             />
 
-            {/* Action Buttons */}
             <div className="flex gap-3">
               <Button
                 variant="primary"
@@ -240,16 +224,6 @@ const ProductDetail = () => {
                 ADD TO CART
               </Button>
               <button
-                onClick={handleToggleFavorite}
-                className="p-3 border border-gray-300 rounded hover:border-black transition-colors"
-                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-              >
-                <Heart
-                  className={`w-6 h-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'
-                    }`}
-                />
-              </button>
-              <button
                 className="p-3 border border-gray-300 rounded hover:border-black transition-colors"
                 aria-label="Share product"
               >
@@ -257,7 +231,6 @@ const ProductDetail = () => {
               </button>
             </div>
 
-            {/* Features */}
             <div className="border-t border-gray-200 pt-6 space-y-3">
               <div className="flex items-center gap-3 text-sm">
                 <Truck className="w-5 h-5 text-gray-600" />
@@ -269,33 +242,23 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Tags */}
             {product.tags && product.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {product.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full"
-                  >
-                    {tag}
-                  </span>
+                  <span key={tag} className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">{tag}</span>
                 ))}
               </div>
             )}
           </div>
         </div>
 
-        {/* Product Details Tabs */}
         <div className="mt-16 border-t border-gray-200">
           <div className="flex gap-8 border-b border-gray-200">
             {['description', 'specifications', 'reviews'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`py-4 text-sm font-medium capitalize transition-colors ${activeTab === tab
-                  ? 'border-b-2 border-black text-black'
-                  : 'text-gray-500 hover:text-black'
-                  }`}
+                className={`py-4 text-sm font-medium capitalize transition-colors ${activeTab === tab ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-black'}`}
               >
                 {tab}
               </button>
@@ -345,25 +308,12 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Related Products */}
         {relatedProducts.length > 0 && (
           <div className="mt-16">
             <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {relatedProducts.map((relatedProduct) => (
-                <ProductCard
-                  key={relatedProduct._id}
-                  product={relatedProduct}
-                  isFavorite={favorites.includes(relatedProduct._id)}
-                  onToggleFavorite={() => {
-                    setFavorites(prev => {
-                      if (prev.includes(relatedProduct._id)) {
-                        return prev.filter(id => id !== relatedProduct._id);
-                      }
-                      return [...prev, relatedProduct._id];
-                    });
-                  }}
-                />
+                <ProductCard key={relatedProduct._id} product={relatedProduct} />
               ))}
             </div>
           </div>

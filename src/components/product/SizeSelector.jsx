@@ -31,15 +31,18 @@ const SizeSelector = ({ sizes, selectedSize, onSelectSize, stock = 100, error = 
           return (
             <button
               key={size}
-              onClick={() => isAvailable && onSelectSize(size)}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                if (isAvailable) onSelectSize(size);
+              }}
               disabled={!isAvailable}
-              className={`min-w-[60px] px-4 py-2.5 text-sm font-medium border transition-all ${
-                isSelected
+              className={`min-w-[60px] px-4 py-2.5 text-sm font-medium border transition-all ${isSelected
                   ? 'border-black bg-black text-white'
                   : isAvailable
-                  ? 'border-gray-300 hover:border-black'
-                  : 'border-gray-200 text-gray-300 cursor-not-allowed line-through'
-              } ${error && !selectedSize ? 'border-red-500' : ''}`}
+                    ? 'border-gray-300 hover:border-black'
+                    : 'border-gray-200 text-gray-300 cursor-not-allowed line-through'
+                } ${error && !selectedSize ? 'border-red-500' : ''}`}
             >
               {size}
             </button>

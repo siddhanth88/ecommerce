@@ -7,7 +7,6 @@ import CategoryFilter, { BrandFilter } from '../components/filters/CategoryFilte
 import PriceRangeFilter from '../components/filters/PriceRangeFilter';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import { Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
 
 const Products = () => {
   const {
@@ -20,22 +19,12 @@ const Products = () => {
     pagination
   } = useProducts();
 
-  const [favorites, setFavorites] = useLocalStorage('favorites', []);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [filters.page]);
-
-  const handleToggleFavorite = (productId) => {
-    setFavorites(prev => {
-      if (prev.includes(productId)) {
-        return prev.filter(id => id !== productId);
-      }
-      return [...prev, productId];
-    });
-  };
 
   const activeFiltersCount =
     (filters.category !== 'All' ? 1 : 0) +
@@ -174,8 +163,6 @@ const Products = () => {
                     <ProductCard
                       key={product._id}
                       product={product}
-                      isFavorite={favorites.includes(product._id)}
-                      onToggleFavorite={handleToggleFavorite}
                     />
                   ))}
                 </div>

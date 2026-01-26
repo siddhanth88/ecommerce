@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom
 import { AuthProvider } from './contexts/AuthContext';
 import { ProductsProvider } from './contexts/ProductsContext';
 import { CartProvider } from './contexts/CartContext';
+import { WishlistProvider } from './contexts/WishlistContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -20,6 +21,7 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const MyOrders = lazy(() => import('./pages/MyOrders'));
+const Wishlist = lazy(() => import('./pages/Wishlist'));
 
 // Lazy load admin components
 const Dashboard = lazy(() => import('./admin/pages/Dashboard'));
@@ -64,63 +66,66 @@ function App() {
         <AuthProvider>
           <ProductsProvider>
             <CartProvider>
-              <div className="min-h-screen bg-white flex flex-col">
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    {/* Public & User Routes */}
-                    <Route element={<MainLayout />}>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/products" element={<Products />} />
-                      <Route path="/product/:id" element={<ProductDetail />} />
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/register" element={<Register />} />
-                      <Route path="/checkout" element={
-                        <ProtectedRoute>
-                          <Checkout />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/my-orders" element={
-                        <ProtectedRoute>
-                          <MyOrders />
-                        </ProtectedRoute>
-                      } />
-                    </Route>
+              <WishlistProvider>
+                <div className="min-h-screen bg-white flex flex-col">
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      {/* Public & User Routes */}
+                      <Route element={<MainLayout />}>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/products" element={<Products />} />
+                        <Route path="/product/:id" element={<ProductDetail />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/checkout" element={
+                          <ProtectedRoute>
+                            <Checkout />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/my-orders" element={
+                          <ProtectedRoute>
+                            <MyOrders />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/wishlist" element={<Wishlist />} />
+                      </Route>
 
-                    {/* Admin Routes */}
-                    <Route path="/admin" element={
-                      <AdminRoute>
-                        <Dashboard />
-                      </AdminRoute>
-                    } />
-                    <Route path="/admin/products" element={
-                      <AdminRoute>
-                        <ProductsList />
-                      </AdminRoute>
-                    } />
-                    <Route path="/admin/products/new" element={
-                      <AdminRoute>
-                        <ProductForm />
-                      </AdminRoute>
-                    } />
-                    <Route path="/admin/products/edit/:id" element={
-                      <AdminRoute>
-                        <ProductForm />
-                      </AdminRoute>
-                    } />
-                    <Route path="/admin/orders" element={
-                      <AdminRoute>
-                        <OrdersList />
-                      </AdminRoute>
-                    } />
-                    <Route path="/admin/users" element={
-                      <AdminRoute>
-                        <UsersList />
-                      </AdminRoute>
-                    } />
-                  </Routes>
-                </Suspense>
-                <ToastWrapper />
-              </div>
+                      {/* Admin Routes */}
+                      <Route path="/admin" element={
+                        <AdminRoute>
+                          <Dashboard />
+                        </AdminRoute>
+                      } />
+                      <Route path="/admin/products" element={
+                        <AdminRoute>
+                          <ProductsList />
+                        </AdminRoute>
+                      } />
+                      <Route path="/admin/products/new" element={
+                        <AdminRoute>
+                          <ProductForm />
+                        </AdminRoute>
+                      } />
+                      <Route path="/admin/products/edit/:id" element={
+                        <AdminRoute>
+                          <ProductForm />
+                        </AdminRoute>
+                      } />
+                      <Route path="/admin/orders" element={
+                        <AdminRoute>
+                          <OrdersList />
+                        </AdminRoute>
+                      } />
+                      <Route path="/admin/users" element={
+                        <AdminRoute>
+                          <UsersList />
+                        </AdminRoute>
+                      } />
+                    </Routes>
+                  </Suspense>
+                  <ToastWrapper />
+                </div>
+              </WishlistProvider>
             </CartProvider>
           </ProductsProvider>
         </AuthProvider>
