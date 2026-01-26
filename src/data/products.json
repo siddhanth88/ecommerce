@@ -1,6 +1,7 @@
 {
   "config": {
     "storeName": "BLINK",
+    "description": "Minimal streetwear essentials for urban living.",
     "logo": "https://placehold.co/150x50?text=BLINK",
     "currency": "INR",
     "currencySymbol": "₹",

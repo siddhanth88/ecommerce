@@ -11,7 +11,7 @@ const Footer = () => {
         <div className="text-center mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">{config.storeName}</h2>
           <p className="text-gray-600 max-w-md mx-auto text-sm sm:text-base">
-            Minimal streetwear essentials for urban living.
+            {config.description}
           </p>
         </div>
 
@@ -35,7 +35,7 @@ const Footer = () => {
 
         <div className="text-center pt-6 sm:pt-8 border-t border-gray-100">
           <p className="text-xs sm:text-sm text-gray-500">
-            © 2024 {config.storeName}. All rights reserved.
+            © 2026 {config.storeName}. All rights reserved.
           </p>
         </div>
       </div>
