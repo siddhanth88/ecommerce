@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, Search, User, Menu, X, Heart, LogOut, Package } from 'lucide-react';
+import { ShoppingBag, Search, User, Menu, X, Heart, LogOut, Package, User2Icon } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import { useProducts } from '../../contexts/ProductsContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -124,6 +124,14 @@ const Header = () => {
                     <Package className="w-5 h-5" />
                   </Link>
                   <span className="text-sm text-black">Hi, {user.name.split(' ')[0]}</span>
+                  <Link
+                    to="/profile"
+                    className="p-2 hover:bg-gray-50 rounded-full transition-colors"
+                    aria-label="Profile"
+                    title="Profile"
+                  >
+                    <User2Icon className="w-5 h-5" />
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="p-2 hover:bg-gray-50 rounded-full transition-colors text-black hover:text-red-600"
@@ -238,9 +246,9 @@ const Header = () => {
                 >
                   <ShoppingBag className="w-5 h-5" />
                 </button>
-                <button className="p-2" aria-label="Account">
-                  <User className="w-5 h-5" />
-                </button>
+                <Link to="/profile" onClick={() => setMenuOpen(false)} className="p-2" aria-label="Profile">
+                  <User2Icon className="w-5 h-5" />
+                </Link>
               </div>
             </div>
           </div>
