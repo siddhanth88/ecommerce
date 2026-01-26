@@ -80,6 +80,7 @@ const Header = () => {
             {/* Right Icons */}
             <div className="flex items-center space-x-4">
               <button
+                title='Search'
                 onClick={() => setSearchOpen(!searchOpen)}
                 className="p-2 hover:bg-gray-50 rounded-full"
                 aria-label="Search"
@@ -90,6 +91,7 @@ const Header = () => {
                 to="/wishlist"
                 className="p-2 hover:bg-gray-50 rounded-full relative"
                 aria-label="Wishlist"
+                title='Wishlist'
               >
                 <Heart className="w-5 h-5" />
                 {wishlistIds.length > 0 && (
@@ -102,6 +104,7 @@ const Header = () => {
                 onClick={() => setCartOpen(true)}
                 className="p-2 hover:bg-gray-50 rounded-full relative"
                 aria-label="Shopping cart"
+                title='Shopping cart'
               >
                 <ShoppingBag className="w-5 h-5" />
                 {itemCount > 0 && (
@@ -112,7 +115,6 @@ const Header = () => {
               </button>
               {user ? (
                 <div className="hidden md:flex items-center space-x-2">
-                  <span className="text-sm text-black">Hi, {user.name.split(' ')[0]}</span>
                   <Link
                     to="/my-orders"
                     className="p-2 hover:bg-gray-50 rounded-full transition-colors"
@@ -121,6 +123,7 @@ const Header = () => {
                   >
                     <Package className="w-5 h-5" />
                   </Link>
+                  <span className="text-sm text-black">Hi, {user.name.split(' ')[0]}</span>
                   <button
                     onClick={handleLogout}
                     className="p-2 hover:bg-gray-50 rounded-full transition-colors text-black hover:text-red-600"
