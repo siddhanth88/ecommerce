@@ -22,6 +22,7 @@ const Register = lazy(() => import('./pages/Register'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const MyOrders = lazy(() => import('./pages/MyOrders'));
 const Wishlist = lazy(() => import('./pages/Wishlist'));
+const Profile = lazy(() => import('./pages/Profile'));
 
 // Lazy load admin components
 const Dashboard = lazy(() => import('./admin/pages/Dashboard'));
@@ -88,6 +89,11 @@ function App() {
                           </ProtectedRoute>
                         } />
                         <Route path="/wishlist" element={<Wishlist />} />
+                        <Route path="/profile" element={
+                          <ProtectedRoute>
+                            <Profile />
+                          </ProtectedRoute>
+                        } />
                       </Route>
 
                       {/* Admin Routes */}

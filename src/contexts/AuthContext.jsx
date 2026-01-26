@@ -71,6 +71,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update profile
+  const updateProfile = async (userData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await authService.updateProfile(userData);
+      setUser(data.user);
+      return { success: true, data };
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || 'Profile update failed';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Logout user
   const logout = async () => {
     try {
@@ -100,6 +117,7 @@ export const AuthProvider = ({ children }) => {
     register,
     login,
     logout,
+    updateProfile,
     isAuthenticated,
     isAdmin
   };

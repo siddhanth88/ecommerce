@@ -52,6 +52,18 @@ export const authService = {
   isAdmin: () => {
     const user = authService.getCurrentUser();
     return user?.role === 'admin';
+  },
+
+  // Update user profile
+  updateProfile: async (userData) => {
+    const response = await api.put('/users/profile', userData);
+    if (response.data.success) {
+      const currentUser = JSON.parse(localStorage.getItem('user'));
+      const updatedUser = { ...currentUser, ...response.data.user };
+      localStorage.setItem('user', JSON.stringify(updatedUser)); // Update local storage with new details
+      return response.data;
+    }
+    return response.data;
   }
 };
 
