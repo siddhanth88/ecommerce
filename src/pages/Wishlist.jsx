@@ -6,6 +6,7 @@ import { useCart } from '../contexts/CartContext';
 import { formatPrice } from '../utils/formatPrice';
 import Button from '../components/common/Button';
 import QuickAddModal from '../components/product/QuickAddModal';
+import { getDisplayPrice } from '../utils/sizeUtils';
 
 const Wishlist = () => {
     const { wishlistItems, toggleWishlist, loading } = useWishlist();
@@ -98,7 +99,7 @@ const Wishlist = () => {
 
                                     <div className="mt-3 flex items-center gap-3">
                                         <p className="text-lg font-bold text-black">
-                                            {formatPrice(product.price)}
+                                            {formatPrice(getDisplayPrice(product))}
                                         </p>
                                         {product.originalPrice && (
                                             <>

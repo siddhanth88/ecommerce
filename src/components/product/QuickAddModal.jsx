@@ -5,6 +5,7 @@ import SizeSelector from './SizeSelector';
 import ColorSelector from './ColorSelector';
 import QuantitySelector from './QuantitySelector';
 import { useCart } from '../../contexts/CartContext';
+import { getDisplayPrice, getLeastAvailableSize } from '../../utils/sizeUtils';
 
 const QuickAddModal = ({ product, isOpen, onClose }) => {
     const { addToCart } = useCart();
@@ -27,7 +28,12 @@ const QuickAddModal = ({ product, isOpen, onClose }) => {
 
     useEffect(() => {
         if (isOpen && product) {
-            if (product.sizes?.length === 1) setSelectedSize(product.sizes[0]);
+            // Select least available size by default
+            const defaultSize = getLeastAvailableSize(product);
+            if (defaultSize) {
+                setSelectedSize(defaultSize);
+            }
+
             if (product.colors?.length === 1) setSelectedColor(product.colors[0]);
             setQuantity(1);
             setError(false);
@@ -35,6 +41,8 @@ const QuickAddModal = ({ product, isOpen, onClose }) => {
     }, [isOpen, product]);
 
     if (!isOpen || !product) return null;
+
+    const displayPrice = getDisplayPrice(product, selectedSize);
 
     const handleAddToCart = () => {
         // Validate selection
@@ -87,7 +95,7 @@ const QuickAddModal = ({ product, isOpen, onClose }) => {
     // It's synchronous state update in usage? `setCartItems(prev => ...)`
     // Yes, functional updates queue correctly.
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         if ((product.sizes?.length > 1 && !selectedSize) ||
             (product.colors?.length > 1 && !selectedColor)) {
             setError(true);
@@ -95,14 +103,16 @@ const QuickAddModal = ({ product, isOpen, onClose }) => {
         }
 
         setIsAdding(true);
-        for (let i = 0; i < quantity; i++) {
-            addToCart(product, selectedSize, selectedColor);
-        }
+        const success = addToCart(product, selectedSize, selectedColor, quantity);
 
-        setTimeout(() => {
+        if (success) {
+            setTimeout(() => {
+                setIsAdding(false);
+                onClose();
+            }, 500);
+        } else {
             setIsAdding(false);
-            onClose();
-        }, 500);
+        }
     };
 
     return (
@@ -144,7 +154,9 @@ const QuickAddModal = ({ product, isOpen, onClose }) => {
                         <p className="text-sm text-gray-500 mb-4">{product.brand}</p>
 
                         <div className="flex items-center gap-2 mb-6">
-                            <span className="text-xl font-bold">{formatPrice(product.price)}</span>
+                            <span className="text-xl font-bold">
+                                {formatPrice(displayPrice)}
+                            </span>
                             {product.originalPrice && (
                                 <span className="text-sm text-gray-400 line-through">
                                     {formatPrice(product.originalPrice)}
@@ -158,8 +170,9 @@ const QuickAddModal = ({ product, isOpen, onClose }) => {
                                     sizes={product.sizes}
                                     selectedSize={selectedSize}
                                     onSelectSize={handleSizeSelect}
-                                    stock={product.stock}
+                                    stock={selectedSize && product.size_variants?.[selectedSize] ? product.size_variants[selectedSize].stock : product.stock}
                                     error={error && !selectedSize}
+                                    availableSizes={product.available_sizes}
                                 />
                             )}
 
@@ -176,7 +189,7 @@ const QuickAddModal = ({ product, isOpen, onClose }) => {
                             <QuantitySelector
                                 quantity={quantity}
                                 onQuantityChange={setQuantity}
-                                stock={product.stock}
+                                stock={selectedSize && product.size_variants?.[selectedSize] ? product.size_variants[selectedSize].stock : product.stock}
                             />
 
                             <button

@@ -38,6 +38,13 @@ const productSchema = new mongoose.Schema({
     type: [String],
     default: []
   },
+  size_variants: {
+    type: Map,
+    of: {
+      stock: { type: Number, default: 0, min: 0 },
+      price: { type: Number, required: true, min: 0 }
+    }
+  },
   colors: {
     type: [String],
     default: []
@@ -48,7 +55,7 @@ const productSchema = new mongoose.Schema({
   },
   stock: {
     type: Number,
-    required: [true, 'Please provide stock quantity'],
+    required: [true, 'Please provide total stock quantity'],
     min: 0,
     default: 0
   },
@@ -80,7 +87,79 @@ const productSchema = new mongoose.Schema({
     contentType: String
   }]
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { 
+    virtuals: true,
+    transform: (doc, ret) => {
+      if (ret.size_variants && typeof ret.size_variants.get === 'function') {
+        ret.size_variants = Object.fromEntries(ret.size_variants);
+      }
+      return ret;
+    }
+  },
+  toObject: { 
+    virtuals: true,
+    transform: (doc, ret) => {
+      if (ret.size_variants && typeof ret.size_variants.get === 'function') {
+        ret.size_variants = Object.fromEntries(ret.size_variants);
+      }
+      return ret;
+    }
+  }
+});
+
+// Virtual for price range
+productSchema.virtual('price_range').get(function() {
+  if (!this.size_variants) return `₹${this.price}`;
+  
+  const entries = this.size_variants instanceof Map 
+    ? Array.from(this.size_variants.values()) 
+    : Object.values(this.size_variants);
+
+  if (entries.length === 0) {
+    return `₹${this.price}`;
+  }
+  
+  const prices = entries.map(v => v.price);
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  
+  if (minPrice === maxPrice) return `₹${minPrice}`;
+  return `₹${minPrice} - ₹${maxPrice}`;
+});
+
+// Virtual for available sizes (stock > 0)
+productSchema.virtual('available_sizes').get(function() {
+  if (!this.size_variants) return [];
+  const available = [];
+  
+  if (this.size_variants instanceof Map) {
+    for (const [size, variant] of this.size_variants.entries()) {
+      if (variant.stock > 0) available.push(size);
+    }
+  } else {
+    for (const [size, variant] of Object.entries(this.size_variants)) {
+      if (variant.stock > 0) available.push(size);
+    }
+  }
+  return available;
+});
+
+// Virtual for total stock
+productSchema.virtual('total_stock').get(function() {
+  if (!this.size_variants) return this.stock;
+  
+  const entries = this.size_variants instanceof Map 
+    ? Array.from(this.size_variants.values()) 
+    : Object.values(this.size_variants);
+    
+  if (entries.length === 0) return this.stock;
+  
+  let total = 0;
+  for (const variant of entries) {
+    total += variant.stock;
+  }
+  return total;
 });
 
 // Create indexes for better query performance

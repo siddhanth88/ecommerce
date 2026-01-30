@@ -26,7 +26,7 @@ export const CartProvider = ({ children }) => {
   };
 
   // Add item to cart
-  const addToCart = (product, selectedSize, selectedColor) => {
+  const addToCart = (product, selectedSize, selectedColor, quantity = 1) => {
     // Validation
     if (!selectedSize && product.sizes.length > 1) {
       console.warn('AddToCart Validation Failed: Missing Size', {
@@ -57,20 +57,35 @@ export const CartProvider = ({ children }) => {
           item.selectedColor === selectedColor
       );
 
+      // Get correct price and stock for selected size
+      const variant = product.size_variants?.[selectedSize];
+      const itemPrice = variant ? variant.price : product.price;
+      const itemStock = variant ? variant.stock : product.stock;
+
       if (existingIndex > -1) {
         // Update quantity
         const updated = [...prev];
-        updated[existingIndex].quantity += 1;
+        if (updated[existingIndex].quantity + quantity > itemStock) {
+          showToast(`Only ${itemStock} items available in stock`, 'error');
+          return prev;
+        }
+        updated[existingIndex].quantity += quantity;
         showToast('Cart updated!', 'success');
         return updated;
       } else {
         // Add new item
+        if (quantity > itemStock) {
+          showToast(`Only ${itemStock} items available in stock`, 'error');
+          return prev;
+        }
         showToast('Added to cart!', 'success');
         return [...prev, {
           ...product,
+          price: itemPrice, // Store the price at time of add
+          stock: itemStock, // Store variants stock for validation
           selectedSize,
           selectedColor,
-          quantity: 1,
+          quantity,
           cartItemId: `${product._id || product.id}-${selectedSize}-${selectedColor}-${Date.now()}`
         }];
       }

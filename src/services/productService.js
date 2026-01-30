@@ -77,6 +77,24 @@ export const productService = {
   delete: async (id) => {
     const response = await api.delete(`/products/${id}`);
     return response.data;
+  },
+
+  // Update size stock (Admin only)
+  updateSizeStock: async (id, size, stock) => {
+    const response = await api.post(`/products/${id}/size/${size}/update-stock`, { stock });
+    return response.data;
+  },
+
+  // Update size price (Admin only)
+  updateSizePrice: async (id, size, price) => {
+    const response = await api.post(`/products/${id}/size/${size}/update-price`, { price });
+    return response.data;
+  },
+
+  // Get low stock sizes (Admin only)
+  getLowStockSizes: async (id, threshold) => {
+    const response = await api.get(`/products/${id}/low-stock-sizes?threshold=${threshold}`);
+    return response.data;
   }
 };
 

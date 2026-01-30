@@ -4,6 +4,7 @@ import { Heart } from 'lucide-react';
 import { formatPrice } from '../../utils/formatPrice';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
+import { getDisplayPrice } from '../../utils/sizeUtils';
 
 /**
  * Product Card Component
@@ -112,7 +113,8 @@ const ProductCard = ({ product }) => {
           </div>
           <div className="flex items-center gap-2">
             <p className="text-black font-bold text-sm sm:text-base">
-              {formatPrice(product.price)}
+              {product.sizes?.length > 1 && <span className="text-[10px] text-gray-500 font-normal mr-1">From</span>}
+              {formatPrice(getDisplayPrice(product))}
             </p>
             {product.originalPrice && (
               <p className="text-gray-400 line-through text-xs">
@@ -120,6 +122,9 @@ const ProductCard = ({ product }) => {
               </p>
             )}
           </div>
+          {product.sizes?.length > 1 && (
+            <p className="text-[10px] text-gray-500 font-medium">Multiple sizes available</p>
+          )}
         </div>
       </div>
     </div>

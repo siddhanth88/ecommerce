@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import productService from '../services/productService';
 import productsData from '../data/products.json'; // Fallback for config
 
@@ -126,24 +126,24 @@ export const ProductsProvider = ({ children }) => {
   };
 
   // Get product by ID
-  const getProductById = (id) => {
+  const getProductById = useCallback((id) => {
     // First try to find in current products
     const product = products.find(product => product._id === id || product.id === id);
     if (product) return product;
 
     // If not found, try in filtered products
     return filteredProducts.find(product => product._id === id || product.id === id);
-  };
+  }, [products, filteredProducts]);
 
   // Get related products (same category, excluding current product)
-  const getRelatedProducts = (productId, limit = 4) => {
+  const getRelatedProducts = useCallback((productId, limit = 4) => {
     const product = getProductById(productId);
     if (!product) return [];
 
     return products
       .filter(p => p.category === product.category && (p._id !== productId && p.id !== productId))
       .slice(0, limit);
-  };
+  }, [products, getProductById]);
 
   // Get products by category
   const getProductsByCategory = (category) => {

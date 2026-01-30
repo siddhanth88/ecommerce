@@ -25,6 +25,7 @@ const ProductForm = () => {
     description: '',
     stock: '',
     sizes: [],
+    size_variants: {},
     colors: [],
     colorNames: [], // Not implementing robust color name mapping in this simple form for now, just keeping structure
     tags: [],
@@ -45,8 +46,9 @@ const ProductForm = () => {
             price: product.price || '',
             originalPrice: product.originalPrice || '',
             stock: product.stock || '',
-            // Ensure arrays are initialized
+            // Ensure arrays and objects are initialized
             sizes: product.sizes || [],
+            size_variants: product.size_variants || {},
             colors: product.colors || [],
             tags: product.tags || []
           });
@@ -79,6 +81,19 @@ const ProductForm = () => {
     setFormData(prev => ({ ...prev, [field]: newArray }));
   };
 
+  const handleVariantChange = (size, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      size_variants: {
+        ...prev.size_variants,
+        [size]: {
+          ...prev.size_variants[size],
+          [field]: value
+        }
+      }
+    }));
+  };
+
   const addArrayItem = (field) => {
     setFormData(prev => ({ ...prev, [field]: [...prev[field], '#000000'] }));
   };
@@ -92,10 +107,19 @@ const ProductForm = () => {
 
   const toggleSize = (size) => {
     setFormData(prev => {
-      const sizes = prev.sizes.includes(size)
+      const isSelected = prev.sizes.includes(size);
+      const newSizes = isSelected
         ? prev.sizes.filter(s => s !== size)
         : [...prev.sizes, size];
-      return { ...prev, sizes };
+
+      const newVariants = { ...prev.size_variants };
+      if (isSelected) {
+        delete newVariants[size];
+      } else {
+        newVariants[size] = { stock: 0, price: prev.price || 0 };
+      }
+
+      return { ...prev, sizes: newSizes, size_variants: newVariants };
     });
   };
 
@@ -143,14 +167,14 @@ const ProductForm = () => {
       // Append all fields to FormData
       Object.keys(formData).forEach(key => {
         if (Array.isArray(formData[key])) {
-          // For arrays, we need to handle them carefully
-          if (key === 'sizes' || key === 'colors' || key === 'tags') {
-            formData[key].forEach(val => data.append(`${key}[]`, val));
-          } else {
-            data.append(key, JSON.stringify(formData[key]));
-          }
+          // Append each item individually with the same key so Multer/body-parser sees it as an array
+          formData[key].forEach(val => data.append(key, val));
+        } else if (key === 'size_variants') {
+          // Objects MUST be stringified for FormData
+          data.append(key, JSON.stringify(formData[key]));
         } else {
-          data.append(key, formData[key]);
+          // Primitive values
+          data.append(key, formData[key] === null ? '' : formData[key]);
         }
       });
 
@@ -379,7 +403,7 @@ const ProductForm = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">Sizes</label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {availableSizes.map(size => (
                   <button
                     key={size}
@@ -394,6 +418,46 @@ const ProductForm = () => {
                   </button>
                 ))}
               </div>
+
+              {formData.sizes.length > 0 && (
+                <div className="mt-4 border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-gray-50 text-gray-700 uppercase text-[10px] font-bold">
+                      <tr>
+                        <th className="px-4 py-3">Size</th>
+                        <th className="px-4 py-3">Stock</th>
+                        <th className="px-4 py-3">Price ($)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {formData.sizes.map(size => (
+                        <tr key={size}>
+                          <td className="px-4 py-3 font-medium">{size}</td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="number"
+                              min="0"
+                              value={formData.size_variants[size]?.stock || 0}
+                              onChange={(e) => handleVariantChange(size, 'stock', Number(e.target.value))}
+                              className="w-24 px-2 py-1 border rounded focus:ring-black focus:border-black"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={formData.size_variants[size]?.price || formData.price || 0}
+                              onChange={(e) => handleVariantChange(size, 'price', Number(e.target.value))}
+                              className="w-24 px-2 py-1 border rounded focus:ring-black focus:border-black"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             <div>

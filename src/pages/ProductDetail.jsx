@@ -15,6 +15,7 @@ import ProductCard from '../components/product/ProductCard';
 import Button from '../components/common/Button';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { getDisplayPrice, getLeastAvailableSize } from '../utils/sizeUtils';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -26,6 +27,13 @@ const ProductDetail = () => {
 
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
+
+  // Helper to get initial size
+  const getInitialSize = (p) => {
+    if (!p) return '';
+    return getLeastAvailableSize(p);
+  };
+
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -35,48 +43,50 @@ const ProductDetail = () => {
   const [recentlyViewed, setRecentlyViewed] = useLocalStorage('recentlyViewed', []);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchProduct = async () => {
+      // Small delay if already loading to prevent rapid flickers on quick nav
       setIsLoading(true);
       try {
-        let foundProduct = getProductById(id);
+        const data = await productService.getById(id);
+        if (!isMounted) return;
 
-        if (!foundProduct) {
-          try {
-            const data = await productService.getById(id);
-            foundProduct = data.product;
-          } catch (err) {
-            console.error('Failed to fetch product:', err);
-            navigate('/');
-            return;
-          }
-        }
+        const foundProduct = data.product;
 
         if (foundProduct) {
-          setProduct(foundProduct);
-          setRelatedProducts(getRelatedProducts(id));
+          // Batch these updates to minimize renders
+          const related = getRelatedProducts(id);
+          const defaultSize = getLeastAvailableSize(foundProduct);
 
-          if (foundProduct.sizes.length === 1) {
-            setSelectedSize(foundProduct.sizes[0]);
+          setProduct(foundProduct);
+          setRelatedProducts(related);
+
+          if (!selectedSize && defaultSize) {
+            setSelectedSize(defaultSize);
           }
-          if (foundProduct.colors.length === 1) {
+
+          if (foundProduct.colors && foundProduct.colors.length === 1 && !selectedColor) {
             setSelectedColor(foundProduct.colors[0]);
           }
 
           setRecentlyViewed(prev => {
-            if (!prev) return [id];
-            const filtered = prev.filter(pid => pid !== id);
+            const filtered = (prev || []).filter(pid => pid !== id);
             return [id, ...filtered].slice(0, 10);
           });
         }
-      } catch (error) {
-        console.error('Error in product detail:', error);
+      } catch (err) {
+        if (isMounted) {
+          console.error('Failed to fetch product:', err);
+          navigate('/');
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchProduct();
-  }, [id, getProductById, getRelatedProducts, navigate, setRecentlyViewed]);
+    return () => { isMounted = false; };
+  }, [id, getRelatedProducts, navigate, setRecentlyViewed]); // Removed selectedSize/selectedColor to prevent loops
 
   // Handlers to update selections
   const handleSizeSelect = (size) => {
@@ -96,8 +106,8 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     setShowError(false);
-    console.log('Adding to cart:', { product: product.name, selectedSize, selectedColor });
-    const success = addToCart(product, selectedSize, selectedColor);
+    console.log('Adding to cart:', { product: product.name, selectedSize, selectedColor, quantity });
+    const success = addToCart(product, selectedSize, selectedColor, quantity);
     if (!success) {
       console.log('Add to cart failed');
       setShowError(true);
@@ -113,6 +123,8 @@ const ProductDetail = () => {
       toggleWishlist(product._id);
     }
   };
+
+  const displayPrice = getDisplayPrice(product, selectedSize);
 
   if (isLoading || !product) {
     return (
@@ -168,7 +180,9 @@ const ProductDetail = () => {
             )}
 
             <div className="flex items-center gap-3">
-              <p className="text-3xl font-bold">{formatPrice(product.price)}</p>
+              <p className="text-3xl font-bold">
+                {formatPrice(displayPrice)}
+              </p>
               {product.originalPrice && (
                 <>
                   <p className="text-xl text-gray-400 line-through">{formatPrice(product.originalPrice)}</p>
@@ -178,8 +192,16 @@ const ProductDetail = () => {
             </div>
 
             <div>
-              {product.stock > 0 ? (
-                <p className="text-sm text-green-600 font-medium">✓ In Stock ({product.stock} available)</p>
+              {selectedSize && product.size_variants?.[selectedSize] ? (
+                product.size_variants[selectedSize].stock > 0 ? (
+                  <p className="text-sm text-green-600 font-medium">
+                    ✓ In Stock ({product.size_variants[selectedSize].stock} available for size {selectedSize})
+                  </p>
+                ) : (
+                  <p className="text-sm text-red-600 font-medium">Size {selectedSize} is Out of Stock</p>
+                )
+              ) : product.stock > 0 ? (
+                <p className="text-sm text-green-600 font-medium">✓ In Stock ({product.stock} total available)</p>
               ) : (
                 <p className="text-sm text-red-600 font-medium">Out of Stock</p>
               )}
@@ -187,13 +209,14 @@ const ProductDetail = () => {
 
             <p className="text-gray-600 leading-relaxed">{product.description}</p>
 
-            {product.sizes.length > 1 && (
+            {product.sizes && product.sizes.length > 0 && (
               <SizeSelector
                 sizes={product.sizes}
                 selectedSize={selectedSize}
                 onSelectSize={handleSizeSelect}
-                stock={product.stock}
+                stock={selectedSize && product.size_variants?.[selectedSize] ? product.size_variants[selectedSize].stock : product.stock}
                 error={showError && !selectedSize}
+                availableSizes={product.available_sizes}
               />
             )}
 
@@ -210,7 +233,7 @@ const ProductDetail = () => {
             <QuantitySelector
               quantity={quantity}
               onQuantityChange={setQuantity}
-              stock={product.stock}
+              stock={selectedSize && product.size_variants?.[selectedSize] ? product.size_variants[selectedSize].stock : product.stock}
             />
 
             <div className="flex gap-3">
@@ -219,7 +242,10 @@ const ProductDetail = () => {
                 size="lg"
                 className="flex-1"
                 onClick={handleAddToCart}
-                disabled={product.stock === 0}
+                disabled={
+                  (selectedSize && product.size_variants?.[selectedSize]?.stock === 0) ||
+                  (!selectedSize && product.stock === 0)
+                }
               >
                 ADD TO CART
               </Button>

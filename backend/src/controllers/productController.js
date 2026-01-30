@@ -211,7 +211,16 @@ export const searchProducts = async (req, res, next) => {
 export const createProduct = async (req, res, next) => {
   try {
     const productData = { ...req.body };
-    
+
+    // Parse size_variants if it's a string (from FormData)
+    if (typeof productData.size_variants === 'string') {
+      try {
+        productData.size_variants = JSON.parse(productData.size_variants);
+      } catch (e) {
+        console.error('Failed to parse size_variants', e);
+      }
+    }
+
     if (req.files && req.files.length > 0) {
       productData.imagesData = req.files.map(file => ({
         buffer: file.buffer,
@@ -219,7 +228,18 @@ export const createProduct = async (req, res, next) => {
       }));
     }
 
-    const product = await Product.create(productData);
+    // Calculate initial total stock if size_variants provided
+    if (productData.size_variants) {
+      let totalStock = 0;
+      Object.values(productData.size_variants).forEach(v => {
+        totalStock += Number(v.stock) || 0;
+      });
+      productData.stock = totalStock;
+    }
+
+    const product = new Product(productData);
+    console.log('[DEBUG] Final Product object before save:', JSON.stringify(product.toObject(), null, 2));
+    await product.save();
 
     res.status(201).json({
       success: true,
@@ -247,6 +267,16 @@ export const updateProduct = async (req, res, next) => {
     }
 
     const updateData = { ...req.body };
+
+    // Parse size_variants if it's a string (from FormData)
+    if (typeof updateData.size_variants === 'string') {
+      try {
+        updateData.size_variants = JSON.parse(updateData.size_variants);
+      } catch (e) {
+        console.error('Failed to parse size_variants', e);
+      }
+    }
+
     if (req.files && req.files.length > 0) {
       updateData.imagesData = req.files.map(file => ({
         buffer: file.buffer,
@@ -254,10 +284,18 @@ export const updateProduct = async (req, res, next) => {
       }));
     }
 
-    product = await Product.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-      runValidators: true
-    });
+    // Recalculate total stock if size_variants is being updated
+    if (updateData.size_variants) {
+      let totalStock = 0;
+      Object.values(updateData.size_variants).forEach(v => {
+        totalStock += Number(v.stock) || 0;
+      });
+      updateData.stock = totalStock;
+    }
+
+    // Use .set() and .save() for reliable Map updates
+    product.set(updateData);
+    await product.save();
 
     res.status(200).json({
       success: true,
@@ -290,6 +328,105 @@ export const deleteProduct = async (req, res, next) => {
       success: true,
       message: 'Product deleted successfully'
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update stock for specific size
+ * @route   POST /api/products/:id/size/:size/update-stock
+ * @access  Private/Admin
+ */
+export const updateSizeStock = async (req, res, next) => {
+  try {
+    const { id, size } = req.params;
+    const { stock } = req.body;
+
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    if (!product.size_variants || !product.size_variants.has(size)) {
+      return res.status(400).json({ success: false, error: `Size ${size} not found` });
+    }
+
+    const variant = product.size_variants.get(size);
+    variant.stock = Number(stock);
+    product.size_variants.set(size, variant);
+
+    // Recalculate total stock
+    let totalStock = 0;
+    for (const v of product.size_variants.values()) {
+      totalStock += v.stock;
+    }
+    product.stock = totalStock;
+
+    await product.save();
+
+    res.status(200).json({ success: true, product });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update price for specific size
+ * @route   POST /api/products/:id/size/:size/update-price
+ * @access  Private/Admin
+ */
+export const updateSizePrice = async (req, res, next) => {
+  try {
+    const { id, size } = req.params;
+    const { price } = req.body;
+
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    if (!product.size_variants || !product.size_variants.has(size)) {
+      return res.status(400).json({ success: false, error: `Size ${size} not found` });
+    }
+
+    const variant = product.size_variants.get(size);
+    variant.price = Number(price);
+    product.size_variants.set(size, variant);
+
+    await product.save();
+
+    res.status(200).json({ success: true, product });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get low stock sizes
+ * @route   GET /api/products/:id/low-stock-sizes
+ * @access  Private/Admin
+ */
+export const getLowStockSizes = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const threshold = Number(req.query.threshold) || 5;
+
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    const lowStockSizes = [];
+    if (product.size_variants) {
+      for (const [size, variant] of product.size_variants.entries()) {
+        if (variant.stock < threshold) {
+          lowStockSizes.push({ size, stock: variant.stock });
+        }
+      }
+    }
+
+    res.status(200).json({ success: true, lowStockSizes });
   } catch (error) {
     next(error);
   }
