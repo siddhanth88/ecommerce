@@ -156,7 +156,7 @@ export const ProductsProvider = ({ children }) => {
     return products.filter(p => p.tags && p.tags.includes(tag));
   };
 
-  const value = {
+  const value = React.useMemo(() => ({
     products,
     filteredProducts,
     categories,
@@ -176,7 +176,28 @@ export const ProductsProvider = ({ children }) => {
     getProductsByCategory,
     getProductsByTag,
     refetch: fetchProducts
-  };
+  }), [
+    products,
+    filteredProducts,
+    categories,
+    brands,
+    config,
+    homeConfig,
+    filters,
+    priceRange,
+    loading,
+    error,
+    pagination,
+    updateFilter,
+    updateFilters,
+    resetFilters,
+    getProductById,
+    getRelatedProducts,
+    getProductsByCategory,
+    getProductsByTag
+    // fetchProducts is stable if defined as a function or wrapped in useCallback if needed, 
+    // but here it's a stable reference from the component scope.
+  ]);
 
   return <ProductsContext.Provider value={value}>{children}</ProductsContext.Provider>;
 };

@@ -25,7 +25,9 @@ const ProductDetail = () => {
   const { user } = useAuth();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
-  const [product, setProduct] = useState(null);
+  // Determine if we already have this product to avoid initial skeleton flicker
+  const existingProduct = getProductById(id);
+  const [product, setProduct] = useState(existingProduct);
   const [relatedProducts, setRelatedProducts] = useState([]);
 
   // Helper to get initial size
@@ -38,15 +40,19 @@ const ProductDetail = () => {
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(!existingProduct);
   const [showError, setShowError] = useState(false);
   const [recentlyViewed, setRecentlyViewed] = useLocalStorage('recentlyViewed', []);
 
   useEffect(() => {
     let isMounted = true;
+
     const fetchProduct = async () => {
-      // Small delay if already loading to prevent rapid flickers on quick nav
-      setIsLoading(true);
+      // If we don't have the product or it's a different one, start loading
+      if (!product || (product._id !== id && product.id !== id)) {
+        setIsLoading(true);
+      }
+
       try {
         const data = await productService.getById(id);
         if (!isMounted) return;
@@ -54,7 +60,7 @@ const ProductDetail = () => {
         const foundProduct = data.product;
 
         if (foundProduct) {
-          // Batch these updates to minimize renders
+          // Use a separate variable for related to avoid stale closures if needed
           const related = getRelatedProducts(id);
           const defaultSize = getLeastAvailableSize(foundProduct);
 
@@ -86,7 +92,7 @@ const ProductDetail = () => {
 
     fetchProduct();
     return () => { isMounted = false; };
-  }, [id, getRelatedProducts, navigate, setRecentlyViewed]); // Removed selectedSize/selectedColor to prevent loops
+  }, [id, navigate, setRecentlyViewed, getRelatedProducts]); // getRelatedProducts is now memoized so it's safe
 
   // Handlers to update selections
   const handleSizeSelect = (size) => {
