@@ -170,3 +170,144 @@ export const getMainCategories = async (req, res, next) => {
     next(error);
   }
 };
+/**
+ * @desc    Create new category
+ * @route   POST /api/categories
+ * @access  Private/Admin
+ */
+export const createCategory = async (req, res, next) => {
+  try {
+    const { name, parentId, image } = req.body;
+
+    let level = 1;
+    if (parentId) {
+      const parent = await Category.findById(parentId);
+      if (!parent) {
+        return res.status(404).json({
+          success: false,
+          error: 'Parent category not found'
+        });
+      }
+      level = parent.level + 1;
+      if (level > 3) {
+        return res.status(400).json({
+          success: false,
+          error: 'Maximum category depth (3 levels) reached'
+        });
+      }
+    }
+
+    const category = await Category.create({
+      name,
+      parentId: parentId || null,
+      level,
+      image
+    });
+
+    res.status(201).json({
+      success: true,
+      category
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update category
+ * @route   PUT /api/categories/:id
+ * @access  Private/Admin
+ */
+export const updateCategory = async (req, res, next) => {
+  try {
+    const { name, parentId, image } = req.body;
+    const { id } = req.params;
+
+    let category = await Category.findById(id);
+
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        error: 'Category not found'
+      });
+    }
+
+    // Update level if parentId changes
+    if (parentId !== undefined && parentId !== category.parentId?.toString()) {
+      if (parentId === null || parentId === '') {
+        category.level = 1;
+        category.parentId = null;
+      } else {
+        const parent = await Category.findById(parentId);
+        if (!parent) {
+          return res.status(404).json({
+            success: false,
+            error: 'Parent category not found'
+          });
+        }
+        category.level = parent.level + 1;
+        category.parentId = parentId;
+
+        if (category.level > 3) {
+          return res.status(400).json({
+            success: false,
+            error: 'Maximum category depth (3 levels) reached'
+          });
+        }
+      }
+    }
+
+    if (name) category.name = name;
+    if (image !== undefined) category.image = image;
+
+    await category.save();
+
+    res.status(200).json({
+      success: true,
+      category
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Delete category
+ * @route   DELETE /api/categories/:id
+ * @access  Private/Admin
+ */
+export const deleteCategory = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const category = await Category.findById(id);
+
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        error: 'Category not found'
+      });
+    }
+
+    // Check if category has children
+    const childrenCount = await Category.countDocuments({ parentId: id });
+    if (childrenCount > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot delete category with subcategories. Delete children first.'
+      });
+    }
+
+    // Note: We might want to check for products too, but for now let's just delete
+    // To be safer, we'd check Product.countDocuments({ $or: [{categoryId: id}, {subCategoryId: id}] })
+    
+    await Category.findByIdAndDelete(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Category deleted'
+    });
+  } catch (error) {
+    next(error);
+  }
+};

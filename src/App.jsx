@@ -35,6 +35,7 @@ const ProductsList = lazy(() => import('./admin/pages/ProductsList'));
 const ProductForm = lazy(() => import('./admin/pages/ProductForm'));
 const OrdersList = lazy(() => import('./admin/pages/OrdersList'));
 const UsersList = lazy(() => import('./admin/pages/UsersList'));
+const CategoryManagement = lazy(() => import('./admin/pages/CategoryManagement'));
 
 // Loading Fallback Component
 const PageLoader = () => (
@@ -136,6 +137,11 @@ function App() {
                       <Route path="/admin/users" element={
                         <AdminRoute>
                           <UsersList />
+                        </AdminRoute>
+                      } />
+                      <Route path="/admin/categories" element={
+                        <AdminRoute>
+                          <CategoryManagement />
                         </AdminRoute>
                       } />
                     </Routes>

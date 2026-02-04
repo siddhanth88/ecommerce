@@ -1,12 +1,13 @@
 import React from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  ShoppingBag, 
-  Users, 
-  Package, 
-  LogOut, 
-  Settings 
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Users,
+  Package,
+  LogOut,
+  Settings,
+  Grid
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -23,6 +24,7 @@ const AdminLayout = ({ children }) => {
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
     { icon: ShoppingBag, label: 'Products', path: '/admin/products' },
+    { icon: Grid, label: 'Categories', path: '/admin/categories' },
     { icon: Package, label: 'Orders', path: '/admin/orders' },
     { icon: Users, label: 'Users', path: '/admin/users' },
   ];
@@ -34,7 +36,7 @@ const AdminLayout = ({ children }) => {
         <div className="h-16 flex items-center justify-center border-b border-gray-200">
           <h1 className="text-xl font-bold tracking-tighter">BLINK ADMIN</h1>
         </div>
-        
+
         <nav className="p-4 space-y-2">
           {navItems.map((item) => (
             <NavLink
@@ -42,10 +44,9 @@ const AdminLayout = ({ children }) => {
               to={item.path}
               end={item.path === '/admin'}
               className={({ isActive }) =>
-                `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-black text-white'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-black'
+                `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${isActive
+                  ? 'bg-black text-white'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-black'
                 }`
               }
             >
@@ -53,7 +54,7 @@ const AdminLayout = ({ children }) => {
               <span className="font-medium">{item.label}</span>
             </NavLink>
           ))}
-          
+
           <div className="pt-8 mt-8 border-t border-gray-100">
             <button
               onClick={handleLogout}
@@ -73,7 +74,7 @@ const AdminLayout = ({ children }) => {
           <h2 className="text-xl font-semibold text-gray-800">
             {navItems.find(item => item.path === location.pathname)?.label || 'Dashboard'}
           </h2>
-          
+
           <div className="flex items-center space-x-4">
             <div className="text-sm text-right">
               <p className="font-medium text-gray-900">{user?.name}</p>
