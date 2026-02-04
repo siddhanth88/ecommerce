@@ -91,14 +91,18 @@ code {
   background: #555;
 }
 
-/* Focus Styles */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid #000;
-  outline-offset: 2px;
+/* Global minimalist input reset */
+input, select, textarea {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove default focus indication for inputs */
+input:focus, select:focus, textarea:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* Loading Skeleton Animation */
