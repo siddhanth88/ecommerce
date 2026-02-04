@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useProducts } from '../contexts/ProductsContext';
 import ProductCard from '../components/product/ProductCard';
 import SearchBar from '../components/filters/SearchBar';
 import SortDropdown from '../components/filters/SortDropdown';
-import CategoryFilter, { BrandFilter } from '../components/filters/CategoryFilter';
+
+import HierarchicalCategoryFilter from '../components/filters/HierarchicalCategoryFilter';
+import useCategoryTree from '../hooks/useCategoryTree';
 import PriceRangeFilter from '../components/filters/PriceRangeFilter';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import { Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Products = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     filteredProducts,
     filters,
@@ -16,11 +20,61 @@ const Products = () => {
     updateFilters,
     resetFilters,
     priceRange,
-    pagination
+    pagination,
+    loading: contextLoading
   } = useProducts();
 
+  const { categoryTree: tree, loading: categoriesLoading } = useCategoryTree();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+
+  // Sync URL params with context filters on mount/update
+  useEffect(() => {
+    const category = searchParams.get('category');
+    const categoryId = searchParams.get('categoryId');
+    const subCategoryId = searchParams.get('subCategoryId');
+    const search = searchParams.get('q');
+
+    const updates = {};
+    if (category && category !== filters.category) updates.category = category;
+    if (categoryId && categoryId !== filters.categoryId) updates.categoryId = categoryId;
+    if (subCategoryId && subCategoryId !== filters.subCategoryId) updates.subCategoryId = subCategoryId;
+    if (search && search !== filters.search) updates.search = search;
+
+    if (Object.keys(updates).length > 0) {
+      updateFilters(updates);
+    }
+  }, [searchParams]);
+
+  // Sync state back to URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+
+    if (filters.category && filters.category !== 'All') {
+      params.set('category', filters.category);
+    } else {
+      params.delete('category');
+    }
+
+    if (filters.categoryId) {
+      params.set('categoryId', filters.categoryId);
+    } else {
+      params.delete('categoryId');
+    }
+
+    if (filters.subCategoryId) {
+      params.set('subCategoryId', filters.subCategoryId);
+    } else {
+      params.delete('subCategoryId');
+    }
+
+    if (filters.search) {
+      params.set('q', filters.search);
+    } else {
+      params.delete('q');
+    }
+
+    setSearchParams(params, { replace: true });
+  }, [filters.category, filters.categoryId, filters.subCategoryId, filters.search]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -28,7 +82,8 @@ const Products = () => {
 
   const activeFiltersCount =
     (filters.category !== 'All' ? 1 : 0) +
-    filters.brands.length +
+    (filters.categoryId ? 1 : 0) +
+    (filters.subCategoryId ? 1 : 0) +
     (filters.search ? 1 : 0) +
     (filters.minPrice !== priceRange.min || filters.maxPrice !== priceRange.max ? 1 : 0);
 
@@ -84,19 +139,12 @@ const Products = () => {
                 {filters.category !== 'All' && (
                   <span className="inline-flex items-center gap-1 bg-black text-white px-3 py-1 rounded-full text-xs">
                     {filters.category}
-                    <button onClick={() => updateFilter('category', 'All')}>
+                    <button onClick={() => updateFilters({ category: 'All', categoryId: '', subCategoryId: '' })}>
                       <X className="w-3 h-3" />
                     </button>
                   </span>
                 )}
-                {filters.brands.map(brand => (
-                  <span key={brand} className="inline-flex items-center gap-1 bg-black text-white px-3 py-1 rounded-full text-xs">
-                    {brand}
-                    <button onClick={() => updateFilter('brands', filters.brands.filter(b => b !== brand))}>
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
+
                 {filters.search && (
                   <span className="inline-flex items-center gap-1 bg-black text-white px-3 py-1 rounded-full text-xs">
                     Search: "{filters.search}"
@@ -119,17 +167,27 @@ const Products = () => {
           <div className="flex gap-8">
             {/* Desktop Filters Sidebar */}
             <aside className="hidden lg:block w-64 flex-shrink-0 space-y-6">
-              <CategoryFilter
-                selectedCategory={filters.category}
-                onCategoryChange={(category) => updateFilter('category', category)}
+              <HierarchicalCategoryFilter
+                categoryTree={tree}
+                selectedCategoryId={filters.subCategoryId || filters.categoryId}
+                loading={categoriesLoading}
+                onCategoryChange={(cat) => {
+                  if (!cat) {
+                    updateFilters({ category: 'All', categoryId: '', subCategoryId: '' });
+                  } else if (cat.level === 3) {
+                    // Leaf/Subcategory
+                    updateFilters({ category: cat.name, subCategoryId: cat._id });
+                  } else if (cat.level === 2) {
+                    // Middle level
+                    updateFilters({ category: cat.name, subCategoryId: cat._id }); // We handle level 2 as subId too for filtering
+                  } else {
+                    // Main Category (Level 1)
+                    updateFilters({ category: cat.name, categoryId: cat._id, subCategoryId: '' });
+                  }
+                }}
               />
 
-              <div className="border-t border-gray-200 pt-6">
-                <BrandFilter
-                  selectedBrands={filters.brands}
-                  onBrandsChange={(brands) => updateFilter('brands', brands)}
-                />
-              </div>
+
 
               <div className="border-t border-gray-200 pt-6">
                 <PriceRangeFilter
@@ -153,7 +211,7 @@ const Products = () => {
 
             {/* Products Grid */}
             <div className="flex-1">
-              {isLoading ? (
+              {contextLoading ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   <LoadingSkeleton variant="product-card" count={8} />
                 </div>
@@ -235,17 +293,23 @@ const Products = () => {
                 </button>
               </div>
 
-              <CategoryFilter
-                selectedCategory={filters.category}
-                onCategoryChange={(category) => updateFilter('category', category)}
+              <HierarchicalCategoryFilter
+                categoryTree={tree}
+                selectedCategoryId={filters.subCategoryId || filters.categoryId}
+                loading={categoriesLoading}
+                onCategoryChange={(cat) => {
+                  if (!cat) {
+                    updateFilters({ category: 'All', categoryId: '', subCategoryId: '' });
+                  } else if (cat.level === 3) {
+                    updateFilters({ category: cat.name, subCategoryId: cat._id });
+                  } else {
+                    updateFilters({ category: cat.name, categoryId: cat._id, subCategoryId: '' });
+                  }
+                  setShowMobileFilters(false);
+                }}
               />
 
-              <div className="border-t border-gray-200 pt-6">
-                <BrandFilter
-                  selectedBrands={filters.brands}
-                  onBrandsChange={(brands) => updateFilter('brands', brands)}
-                />
-              </div>
+
 
               <div className="border-t border-gray-200 pt-6">
                 <PriceRangeFilter

@@ -9,16 +9,7 @@ export const filterByCategory = (products, category) => {
   return products.filter(product => product.category === category);
 };
 
-/**
- * Filter products by brand
- * @param {Array} products - Array of products
- * @param {Array} brands - Array of brands to filter by
- * @returns {Array} Filtered products
- */
-export const filterByBrand = (products, brands) => {
-  if (!brands || brands.length === 0) return products;
-  return products.filter(product => brands.includes(product.brand));
-};
+
 
 /**
  * Filter products by price range
@@ -34,7 +25,7 @@ export const filterByPriceRange = (products, minPrice, maxPrice) => {
 };
 
 /**
- * Search products by name or brand
+ * Search products by name or description
  * @param {Array} products - Array of products
  * @param {string} query - Search query
  * @returns {Array} Filtered products
@@ -45,7 +36,7 @@ export const searchProducts = (products, query) => {
   const lowerQuery = query.toLowerCase();
   return products.filter(product => 
     product.name.toLowerCase().includes(lowerQuery) ||
-    product.brand.toLowerCase().includes(lowerQuery) ||
+
     product.description.toLowerCase().includes(lowerQuery) ||
     product.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
   );
@@ -107,10 +98,7 @@ export const applyFilters = (products, filters) => {
     filtered = filterByCategory(filtered, filters.category);
   }
   
-  // Apply brand filter
-  if (filters.brands && filters.brands.length > 0) {
-    filtered = filterByBrand(filtered, filters.brands);
-  }
+
   
   // Apply price range filter
   if (filters.minPrice !== undefined && filters.maxPrice !== undefined) {

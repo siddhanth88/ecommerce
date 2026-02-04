@@ -1,5 +1,6 @@
 import React from 'react';
-import { ShoppingCart, Search, User, Heart } from 'lucide-react';
+import { ShoppingCart, User, Heart } from 'lucide-react';
+import GlobalSearch from './GlobalSearch';
 
 export default function Header({ cartOpen, setCartOpen, setLoginOpen, cartItems, setCurrentPage }) {
   return (
@@ -14,23 +15,21 @@ export default function Header({ cartOpen, setCartOpen, setLoginOpen, cartItems,
               <span className="text-xl font-bold">Stuffsus</span>
             </button>
             <nav className="hidden md:flex space-x-8">
-              <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Brands</a>
+
               <button onClick={() => setCurrentPage('home')} className="text-sm font-medium text-gray-900">Shop</button>
               <a href="#" className="text-sm text-gray-600 hover:text-gray-900">Blog</a>
             </nav>
           </div>
-          
+
           <div className="flex items-center space-x-4">
-            <button className="p-2 hover:bg-gray-100 rounded-full">
-              <Search className="w-5 h-5" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full relative">
+            <GlobalSearch />
+            <button className="p-2 hover:bg-gray-100 rounded-full relative text-gray-600">
               <Heart className="w-5 h-5" />
               <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
-            <button 
+            <button
               onClick={() => setCartOpen(true)}
-              className="p-2 hover:bg-gray-100 rounded-full relative"
+              className="p-2 hover:bg-gray-100 rounded-full relative text-gray-600"
             >
               <ShoppingCart className="w-5 h-5" />
               {cartItems.length > 0 && (
@@ -39,11 +38,11 @@ export default function Header({ cartOpen, setCartOpen, setLoginOpen, cartItems,
                 </span>
               )}
             </button>
-            <button 
+            <button
               onClick={() => setLoginOpen(true)}
-              className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center"
+              className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
             >
-              <User className="w-5 h-5" />
+              <User className="w-5 h-5 text-gray-700" />
             </button>
           </div>
         </div>

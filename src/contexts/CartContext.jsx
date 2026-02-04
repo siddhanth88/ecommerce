@@ -58,9 +58,27 @@ export const CartProvider = ({ children }) => {
       );
 
       // Get correct price and stock for selected size
-      const variant = product.size_variants?.[selectedSize];
-      const itemPrice = variant ? variant.price : product.price;
-      const itemStock = variant ? variant.stock : product.stock;
+      let itemPrice = product.price;
+      let itemStock = product.stock;
+
+      // Check new colorVariants structure
+      if (product.colorVariants && product.colorVariants.length > 0 && selectedColor) {
+        // Find variant by hex or name (assuming selectedColor is Hex as per ProductDetail logic)
+        const variant = product.colorVariants.find(c => c.hexCode === selectedColor || c.name === selectedColor);
+        if (variant && variant.sizes) {
+          const sizeObj = variant.sizes.find(s => s.size === selectedSize);
+          if (sizeObj) {
+            if (sizeObj.price) itemPrice = sizeObj.price;
+            itemStock = sizeObj.stock;
+          }
+        }
+      }
+      // Fallback to legacy
+      else if (product.size_variants?.[selectedSize]) {
+        const variant = product.size_variants[selectedSize];
+        itemPrice = variant.price;
+        itemStock = variant.stock;
+      }
 
       if (existingIndex > -1) {
         // Update quantity
@@ -78,11 +96,24 @@ export const CartProvider = ({ children }) => {
           showToast(`Only ${itemStock} items available in stock`, 'error');
           return prev;
         }
+        // Compute correct image for the selected color
+        let itemImage = (product.imageDataArray && product.imageDataArray[0]) ||
+          (product.images && product.images[0]) ||
+          product.image;
+
+        if (product.colorVariants && product.colorVariants.length > 0 && selectedColor) {
+          const variant = product.colorVariants.find(c => c.hexCode === selectedColor || c.name === selectedColor);
+          if (variant && variant.images && variant.images.length > 0) {
+            itemImage = variant.images[0];
+          }
+        }
+
         showToast('Added to cart!', 'success');
         return [...prev, {
           ...product,
           price: itemPrice, // Store the price at time of add
           stock: itemStock, // Store variants stock for validation
+          image: itemImage, // Store selected color image
           selectedSize,
           selectedColor,
           quantity,
@@ -159,7 +190,7 @@ export const CartProvider = ({ children }) => {
         size: item.selectedSize,
         color: item.selectedColor,
         colorName: item.selectedColor,
-        image: item.images[0]
+        image: item.image || (item.images && item.images[0]) || (item.imageDataArray && item.imageDataArray[0])
       }));
 
       const currentSubtotal = validItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);

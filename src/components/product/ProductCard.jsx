@@ -5,6 +5,9 @@ import { formatPrice } from '../../utils/formatPrice';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { getDisplayPrice } from '../../utils/sizeUtils';
+import { getProductImage } from '../../utils/imageUtils';
+
+
 
 /**
  * Product Card Component
@@ -26,9 +29,20 @@ const ProductCard = ({ product }) => {
 
     // For products with only one size/color, add directly
     const defaultSize = product.sizes?.length === 1 ? product.sizes[0] : null;
-    const defaultColor = product.colors?.length === 1 ? product.colors[0] : null;
 
-    if ((product.sizes?.length > 1) || (product.colors?.length > 1)) {
+    // Get default color - check colorVariants first, then legacy colors
+    let defaultColor = null;
+    if (product.colorVariants?.length === 1) {
+      defaultColor = product.colorVariants[0].hexCode;
+    } else if (product.colors?.length === 1) {
+      defaultColor = product.colors[0];
+    }
+
+    // Determine if multiple options exist
+    const hasMultipleSizes = product.sizes?.length > 1;
+    const hasMultipleColors = (product.colorVariants?.length > 1) || (product.colors?.length > 1);
+
+    if (hasMultipleSizes || hasMultipleColors) {
       // Navigate to product detail for selection
       navigate(`/product/${product._id}`);
     } else {
@@ -49,7 +63,7 @@ const ProductCard = ({ product }) => {
         <div className="overflow-hidden bg-gray-50 aspect-[3/4] mb-3 relative">
           <Link to={`/product/${product._id}`}>
             <img
-              src={(product.imageDataArray && product.imageDataArray[0]) || (product.images && product.images[0]) || 'https://via.placeholder.com/300x400?text=No+Image'}
+              src={getProductImage(product)}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               loading="lazy"
@@ -96,7 +110,7 @@ const ProductCard = ({ product }) => {
               onClick={handleQuickAdd}
               className="w-full py-2 sm:py-2.5 bg-white text-black text-[10px] sm:text-xs font-bold tracking-widest hover:bg-gray-100 transition-colors uppercase shadow-lg"
             >
-              {product.sizes?.length > 1 || product.colors?.length > 1 ? 'Select Options' : 'Add to Bag'}
+              {(product.sizes?.length > 1 || product.colorVariants?.length > 1 || product.colors?.length > 1) ? 'Select Options' : 'Add to Bag'}
             </button>
           </div>
         </div>
@@ -108,7 +122,7 @@ const ProductCard = ({ product }) => {
               <Link to={`/product/${product._id}`}>
                 <h3 className="font-medium text-sm sm:text-base truncate hover:underline">{product.name}</h3>
               </Link>
-              <p className="text-gray-400 text-[10px] sm:text-xs uppercase tracking-wider">{product.brand}</p>
+
             </div>
           </div>
           <div className="flex items-center gap-2">

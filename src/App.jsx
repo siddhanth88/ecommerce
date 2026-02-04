@@ -24,6 +24,11 @@ const MyOrders = lazy(() => import('./pages/MyOrders'));
 const Wishlist = lazy(() => import('./pages/Wishlist'));
 const Profile = lazy(() => import('./pages/Profile'));
 
+// Lazy load category landing pages
+const MenLanding = lazy(() => import('./pages/MenLanding'));
+const WomenLanding = lazy(() => import('./pages/WomenLanding'));
+const KidsLanding = lazy(() => import('./pages/KidsLanding'));
+
 // Lazy load admin components
 const Dashboard = lazy(() => import('./admin/pages/Dashboard'));
 const ProductsList = lazy(() => import('./admin/pages/ProductsList'));
@@ -78,6 +83,12 @@ function App() {
                         <Route path="/product/:id" element={<ProductDetail />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
+
+                        {/* Category Landing Pages */}
+                        <Route path="/men" element={<MenLanding />} />
+                        <Route path="/women" element={<WomenLanding />} />
+                        <Route path="/kids" element={<KidsLanding />} />
+
                         <Route path="/checkout" element={
                           <ProtectedRoute>
                             <Checkout />

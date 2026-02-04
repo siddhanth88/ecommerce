@@ -6,11 +6,7 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Please provide product name'],
     trim: true
   },
-  brand: {
-    type: String,
-    required: [true, 'Please provide brand name'],
-    trim: true
-  },
+
   price: {
     type: Number,
     required: [true, 'Please provide price'],
@@ -45,6 +41,20 @@ const productSchema = new mongoose.Schema({
       price: { type: Number, required: true, min: 0 }
     }
   },
+  // New colorVariants structure - each color has its own images AND sizes/stock
+  colorVariants: [{
+    name: { type: String, required: true },       // e.g. "Red", "Blue"
+    hexCode: { type: String, required: true },    // e.g. "#FF0000"
+    images: [String],                              // Array of image URLs for this color
+    isDefault: { type: Boolean, default: false },
+    // Nested sizes for this specific color variant
+    sizes: [{
+      size: { type: String, required: true },
+      stock: { type: Number, default: 0, min: 0 },
+      price: { type: Number } // Optional override
+    }]
+  }],
+  // Legacy fields kept for backward compatibility (computed in virtuals)
   colors: {
     type: [String],
     default: []
@@ -52,6 +62,15 @@ const productSchema = new mongoose.Schema({
   colorNames: {
     type: [String],
     default: []
+  },
+  // Category references for hierarchical categories
+  categoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category'
+  },
+  subCategoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category'
   },
   stock: {
     type: Number,
@@ -110,6 +129,24 @@ const productSchema = new mongoose.Schema({
 
 // Virtual for price range
 productSchema.virtual('price_range').get(function() {
+  // Check new structure first
+  if (this.colorVariants && this.colorVariants.some(c => c.sizes && c.sizes.length > 0)) {
+     let prices = [];
+     this.colorVariants.forEach(c => {
+       if (c.sizes) {
+         c.sizes.forEach(s => {
+           if (s.price) prices.push(s.price);
+           else prices.push(this.price); // Use base price if no override
+         });
+       }
+     });
+     if (prices.length === 0) return `₹${this.price}`;
+     const min = Math.min(...prices);
+     const max = Math.max(...prices);
+     if (min === max) return `₹${min}`;
+     return `₹${min} - ₹${max}`;
+  }
+
   if (!this.size_variants) return `₹${this.price}`;
   
   const entries = this.size_variants instanceof Map 
@@ -130,6 +167,19 @@ productSchema.virtual('price_range').get(function() {
 
 // Virtual for available sizes (stock > 0)
 productSchema.virtual('available_sizes').get(function() {
+  // Check new structure
+  if (this.colorVariants && this.colorVariants.some(c => c.sizes && c.sizes.length > 0)) {
+    const sizeSet = new Set();
+    this.colorVariants.forEach(c => {
+      if (c.sizes) {
+        c.sizes.forEach(s => {
+          if (s.stock > 0) sizeSet.add(s.size);
+        });
+      }
+    });
+    return Array.from(sizeSet);
+  }
+
   if (!this.size_variants) return [];
   const available = [];
   
@@ -147,6 +197,19 @@ productSchema.virtual('available_sizes').get(function() {
 
 // Virtual for total stock
 productSchema.virtual('total_stock').get(function() {
+  // Check new structure first
+  if (this.colorVariants && this.colorVariants.some(c => c.sizes && c.sizes.length > 0)) {
+    let total = 0;
+    this.colorVariants.forEach(c => {
+      if (c.sizes) {
+        c.sizes.forEach(s => {
+          total += (s.stock || 0);
+        });
+      }
+    });
+    return total; // Return sum of all variant stocks
+  }
+
   if (!this.size_variants) return this.stock;
   
   const entries = this.size_variants instanceof Map 
@@ -162,9 +225,57 @@ productSchema.virtual('total_stock').get(function() {
   return total;
 });
 
+// Virtual for default color (first with isDefault=true, or first color)
+productSchema.virtual('defaultColor').get(function() {
+  if (!this.colorVariants || this.colorVariants.length === 0) return null;
+  const defaultVariant = this.colorVariants.find(c => c.isDefault);
+  return defaultVariant || this.colorVariants[0];
+});
+
+// Virtual for default color's images
+productSchema.virtual('defaultColorImages').get(function() {
+  const defaultColor = this.defaultColor;
+  if (!defaultColor) return this.images || [];
+  return defaultColor.images?.length > 0 ? defaultColor.images : (this.images || []);
+});
+
+// Backward compatibility: compute colors array from colorVariants
+productSchema.virtual('computedColors').get(function() {
+  if (!this.colorVariants || this.colorVariants.length === 0) return this.colors || [];
+  return this.colorVariants.map(cv => cv.hexCode);
+});
+
+// Backward compatibility: compute colorNames array from colorVariants
+productSchema.virtual('computedColorNames').get(function() {
+  if (!this.colorVariants || this.colorVariants.length === 0) return this.colorNames || [];
+  return this.colorVariants.map(cv => cv.name);
+});
+
+// Validate colorVariants (1-6 colors max)
+productSchema.path('colorVariants').validate(function(value) {
+  if (!value) return true;
+  return value.length <= 6;
+}, 'Maximum 6 color variants allowed');
+
+// Pre-save: ensure one default color if colorVariants exist
+productSchema.pre('save', function(next) {
+  if (this.colorVariants && this.colorVariants.length > 0) {
+    const hasDefault = this.colorVariants.some(c => c.isDefault);
+    if (!hasDefault) {
+      this.colorVariants[0].isDefault = true;
+    }
+    // Sync legacy fields for backward compatibility
+    this.colors = this.colorVariants.map(cv => cv.hexCode);
+    this.colorNames = this.colorVariants.map(cv => cv.name);
+  }
+  next();
+});
+
 // Create indexes for better query performance
-productSchema.index({ name: 'text', description: 'text', brand: 'text' });
+productSchema.index({ name: 'text', description: 'text' });
 productSchema.index({ category: 1 });
+productSchema.index({ categoryId: 1 });
+productSchema.index({ subCategoryId: 1 });
 productSchema.index({ price: 1 });
 productSchema.index({ isActive: 1 });
 

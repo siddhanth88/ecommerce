@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, ShoppingBag } from 'lucide-react';
 import { formatPrice } from '../../utils/formatPrice';
 import SizeSelector from './SizeSelector';
@@ -7,24 +7,59 @@ import QuantitySelector from './QuantitySelector';
 import { useCart } from '../../contexts/CartContext';
 import { getDisplayPrice, getLeastAvailableSize } from '../../utils/sizeUtils';
 
-const QuickAddModal = ({ product, isOpen, onClose }) => {
+const QuickAddModal = ({ product, isOpen, onClose, initialColorIndex = 0 }) => {
     const { addToCart } = useCart();
     const [selectedSize, setSelectedSize] = useState('');
-    const [selectedColor, setSelectedColor] = useState('');
+    const [selectedColorIndex, setSelectedColorIndex] = useState(initialColorIndex);
     const [quantity, setQuantity] = useState(1);
     const [error, setError] = useState(false);
     const [isAdding, setIsAdding] = useState(false);
 
-    // Handlers to update selections
-    const handleSizeSelect = (size) => {
-        console.log('[QuickAddModal] Size selected:', size, '| Current error state:', error);
-        setSelectedSize(size);
-    };
+    // Get color info
+    const hasColorVariants = product?.colorVariants?.length > 0;
 
-    const handleColorSelect = (color) => {
-        console.log('[QuickAddModal] Color selected:', color, '| Current error state:', error);
-        setSelectedColor(color);
-    };
+    // Update selected color when initialColorIndex changes (e.g. modal reused for different products)
+    useEffect(() => {
+        setSelectedColorIndex(initialColorIndex);
+    }, [initialColorIndex, product]);
+
+    // Reset size and quantity when product changes
+    useEffect(() => {
+        if (product) {
+            setSelectedSize('');
+            setQuantity(1);
+        }
+    }, [product]);
+
+    // Get currently selected image
+    const selectedImage = useMemo(() => {
+        if (!product) return '';
+
+        // If using colorVariants, use image from selected color
+        if (hasColorVariants && selectedColorIndex !== null) {
+            const colorVariant = product.colorVariants[selectedColorIndex];
+            if (colorVariant?.images?.length > 0) {
+                return colorVariant.images[0];
+            }
+        }
+
+        // Fallback to legacy colors if they have specific imagery (usually not, but good for completeness)
+        // For legacy, we usually just show the main images.
+
+        // Absolute fallbacks
+        return (product.imageDataArray && product.imageDataArray[0]) ||
+            (product.images && product.images[0]) ||
+            product.image ||
+            'https://via.placeholder.com/300x400?text=No+Image';
+    }, [product, selectedColorIndex, hasColorVariants]);
+
+    // Backward compatible - get color hex for cart
+    const selectedColorHex = useMemo(() => {
+        if (hasColorVariants) {
+            return product.colorVariants[selectedColorIndex]?.hexCode;
+        }
+        return product?.colors?.[selectedColorIndex] || product?.colors?.[0] || null;
+    }, [product, selectedColorIndex, hasColorVariants]);
 
     useEffect(() => {
         if (isOpen && product) {
@@ -34,76 +69,34 @@ const QuickAddModal = ({ product, isOpen, onClose }) => {
                 setSelectedSize(defaultSize);
             }
 
-            if (product.colors?.length === 1) setSelectedColor(product.colors[0]);
+            // ONLY set default color if initialColorIndex is 0 (or some default value)
+            // Actually, it's better to rely on the props value which defaults to 0.
+            // If the user hasn't passed anything, it will be 0.
+            if (initialColorIndex === 0 && hasColorVariants) {
+                const idx = product.colorVariants.findIndex(c => c.isDefault);
+                if (idx >= 0) setSelectedColorIndex(idx);
+            }
+
             setQuantity(1);
             setError(false);
         }
-    }, [isOpen, product]);
+    }, [isOpen, product, hasColorVariants, initialColorIndex]);
 
     if (!isOpen || !product) return null;
 
-    const displayPrice = getDisplayPrice(product, selectedSize);
+    const displayPrice = getDisplayPrice(product, selectedSize, selectedColorHex);
 
-    const handleAddToCart = () => {
-        // Validate selection
-        if ((product.sizes?.length > 1 && !selectedSize) ||
-            (product.colors?.length > 1 && !selectedColor)) {
-            setError(true);
-            return;
-        }
-
-        setIsAdding(true);
-        const success = addToCart({
-            ...product,
-            quantity // Pass quantity implicitly or handle in context? 
-            // Context addToCart doesn't take quantity usually, but adds 1. 
-            // Let's loop or update context? 
-            // Checking context: addToCart(product, size, color) -> adds 1 quantity.
-            // We need to call it multiple times or update context to support quantity.
-            // For now, let's just add 1, or better: modify cart context later. 
-            // Actually, standard quick add is usually 1 item.
-            // But user REQUESTED quantity selection.
-            // So we'll call addToCart, then updateQuantity if needed?
-            // Or simply: addToCart should potentially accept quantity.
-            // Let's check context. Context `addToCart` adds 1.
-        }, selectedSize, selectedColor);
-
-        // Using a loop to add quantity? No, that's bad.
-        // Let's modify logic: 
-        // We will call addToCart once. If successful, we update quantity if > 1.
-        // But addToCart returns true/false.
-        // Wait, cart context implementation:
-        // addToCart checks existing index. If exists, +1. If not, pushes new with quantity 1.
-        // So we can't easily set quantity > 1 with current context without multiple calls or context refactor.
-        // I will refactor context to accept quantity or just loop for now? 
-        // Looping 50 times is bad.
-        // I will assume for now we add 1, OR I will make a quick context patch if easy.
-        // Checking context... `addToCart` takes (product, size, color).
-        // I will stick to adding 1 for now, or calling it `quantity` times.
-        // Actually, `QuantitySelector` is in the requirements.
-        // Let's do: call addToCart once, then if quantity > 1, call updateQuantity?
-        // We need the cartItemId returned or predictable.
-        // CartContext doesn't return ID.
-        // Okay, I will modify CartContext to accept quantity in next step if needed. 
-        // For now, let's implement the modal and pass quantity to addToCart (assuming I will update context).
-    };
-
-    // Re-reading context: addToCart doesn't take quantity.
-    // I will just add 1 for now and note to refactor context or loop.
-    // Wait, I can loop `quantity` times?
-    // `for(let i=0; i<quantity; i++) addToCart(...)`
-    // It's synchronous state update in usage? `setCartItems(prev => ...)`
-    // Yes, functional updates queue correctly.
+    // Determine if multiple colors exist
+    const hasMultipleColors = (product.colorVariants?.length > 1) || (product.colors?.length > 1);
 
     const handleAdd = async () => {
-        if ((product.sizes?.length > 1 && !selectedSize) ||
-            (product.colors?.length > 1 && !selectedColor)) {
+        if ((product.sizes?.length > 1 && !selectedSize)) {
             setError(true);
             return;
         }
 
         setIsAdding(true);
-        const success = addToCart(product, selectedSize, selectedColor, quantity);
+        const success = addToCart(product, selectedSize, selectedColorHex, quantity);
 
         if (success) {
             setTimeout(() => {
@@ -132,17 +125,17 @@ const QuickAddModal = ({ product, isOpen, onClose }) => {
 
                 <div className="flex flex-col sm:flex-row h-full">
                     {/* Image */}
-                    <div className="hidden sm:block sm:w-2/5 aspect-[3/4] sm:aspect-auto bg-gray-100 relative">
+                    <div className="hidden sm:block sm:w-2/5 aspect-[3/4] sm:aspect-auto bg-gray-100 relative transition-all duration-300">
                         <img
-                            src={(product.imageDataArray && product.imageDataArray[0]) || (product.images && product.images[0]) || 'https://via.placeholder.com/300x400'}
+                            src={selectedImage}
                             alt={product.name}
                             className="absolute inset-0 w-full h-full object-cover"
                         />
                     </div>
                     {/* Mobile Image (Small header) */}
-                    <div className="sm:hidden h-32 bg-gray-50 flex items-center justify-center flex-shrink-0 border-b border-gray-100">
+                    <div className="sm:hidden h-32 bg-gray-50 flex items-center justify-center flex-shrink-0 border-b border-gray-100 transition-all duration-300">
                         <img
-                            src={(product.imageDataArray && product.imageDataArray[0]) || (product.images && product.images[0]) || 'https://via.placeholder.com/300x400'}
+                            src={selectedImage}
                             alt={product.name}
                             className="h-full w-auto object-contain"
                         />
@@ -151,7 +144,7 @@ const QuickAddModal = ({ product, isOpen, onClose }) => {
                     {/* Details */}
                     <div className="p-6 sm:w-3/5 overflow-y-auto max-h-[80vh] sm:max-h-full">
                         <h3 className="text-lg font-bold text-gray-900 mb-1">{product.name}</h3>
-                        <p className="text-sm text-gray-500 mb-4">{product.brand}</p>
+
 
                         <div className="flex items-center gap-2 mb-6">
                             <span className="text-xl font-bold">
@@ -165,24 +158,28 @@ const QuickAddModal = ({ product, isOpen, onClose }) => {
                         </div>
 
                         <div className="space-y-6">
+                            {/* Color Selector */}
+                            {hasMultipleColors && (
+                                <ColorSelector
+                                    colorVariants={hasColorVariants ? product.colorVariants : []}
+                                    selectedColorIndex={selectedColorIndex}
+                                    onSelectColor={setSelectedColorIndex}
+                                    error={error && selectedColorIndex === null}
+                                    // Legacy props
+                                    colors={!hasColorVariants ? product.colors : []}
+                                    colorNames={!hasColorVariants ? product.colorNames : []}
+                                    selectedColor={selectedColorHex}
+                                />
+                            )}
+
                             {product.sizes?.length > 0 && (
                                 <SizeSelector
                                     sizes={product.sizes}
                                     selectedSize={selectedSize}
-                                    onSelectSize={handleSizeSelect}
+                                    onSelectSize={setSelectedSize}
                                     stock={selectedSize && product.size_variants?.[selectedSize] ? product.size_variants[selectedSize].stock : product.stock}
                                     error={error && !selectedSize}
                                     availableSizes={product.available_sizes}
-                                />
-                            )}
-
-                            {product.colors?.length > 0 && (
-                                <ColorSelector
-                                    colors={product.colors}
-                                    colorNames={product.colorNames}
-                                    selectedColor={selectedColor}
-                                    onSelectColor={handleColorSelect}
-                                    error={error && !selectedColor}
                                 />
                             )}
 

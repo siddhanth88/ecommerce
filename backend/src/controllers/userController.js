@@ -48,7 +48,7 @@ export const getWishlist = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id).populate({
       path: 'wishlist',
-      select: 'name brand price originalPrice discount imagesData category isActive sizes colors colorNames stock size_variants'
+      select: 'name price originalPrice discount imagesData category isActive sizes colors colorNames stock size_variants colorVariants'
     });
 
     const products = user.wishlist.map(product => {

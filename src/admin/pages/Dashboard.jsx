@@ -4,6 +4,7 @@ import adminService from '../../services/adminService';
 import Loader from '../../components/common/Loader';
 import { DollarSign, ShoppingBag, Users as UsersIcon, Package } from 'lucide-react';
 import { formatPrice } from '../../utils/formatPrice';
+import { getProductImage } from '../../utils/imageUtils';
 
 const StatCard = ({ title, value, icon: Icon, color }) => (
   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -112,7 +113,7 @@ const Dashboard = () => {
             {stats.topProducts.map((product) => (
               <div key={product._id} className="px-6 py-4 flex items-center space-x-4">
                 <img
-                  src={(product.imageDataArray && product.imageDataArray[0]) || (product.images && product.images[0]) || 'https://via.placeholder.com/50x50?text=No+Image'}
+                  src={getProductImage(product)}
                   alt={product.name}
                   className="w-12 h-12 rounded object-cover"
                 />

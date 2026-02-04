@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Minus, Plus } from 'lucide-react';
 import { formatPrice } from '../../utils/formatPrice';
 import { useCart } from '../../contexts/CartContext';
+import { getProductImage } from '../../utils/imageUtils';
 
 /**
  * Cart Item Component
@@ -36,12 +37,7 @@ const CartItem = ({ item }) => {
       {/* Product Image */}
       <div className="w-20 sm:w-24 h-28 sm:h-32 bg-gray-50 flex-shrink-0 overflow-hidden">
         <img
-          src={
-            (item.imageDataArray && item.imageDataArray[0]) ||
-            (item.images && item.images[0]) ||
-            (item.image) ||
-            'https://via.placeholder.com/300x400?text=No+Image'
-          }
+          src={item.image || getProductImage(item)}
           alt={item.name}
           className="w-full h-full object-cover"
         />
@@ -52,7 +48,7 @@ const CartItem = ({ item }) => {
         <div className="flex justify-between items-start gap-2 mb-2">
           <div className="flex-1 min-w-0">
             <h4 className="font-medium text-sm sm:text-base truncate">{item.name}</h4>
-            <p className="text-gray-500 text-xs sm:text-sm">{item.brand}</p>
+
           </div>
           <button
             onClick={handleRemove}

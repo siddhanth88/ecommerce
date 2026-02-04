@@ -5,12 +5,13 @@ import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import { formatPrice } from '../utils/formatPrice';
 import productsData from '../data/products.json';
+import { getProductImage } from '../utils/imageUtils';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { cartItems, total, subtotal, tax, placeOrder, loading: cartLoading } = useCart();
   const { user } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     fullName: user?.name || '',
     address: '',
@@ -19,7 +20,7 @@ const Checkout = () => {
     country: '',
     phone: ''
   });
-  
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -48,9 +49,9 @@ const Checkout = () => {
       };
 
       const result = await placeOrder(orderData);
-      
+
       if (result.success) {
-        navigate('/my-orders'); 
+        navigate('/my-orders');
       } else {
         setError(result.error || 'Failed to place order');
       }
@@ -64,7 +65,7 @@ const Checkout = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold mb-8">Checkout</h1>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Shipping Form */}
         <div>
@@ -75,7 +76,7 @@ const Checkout = () => {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700">Full Name</label>
               <input
@@ -149,7 +150,7 @@ const Checkout = () => {
                 />
               </div>
             </div>
-            
+
             <div className="pt-4 border-t border-gray-100">
               <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
               <div className="flex items-center space-x-3 p-4 border border-gray-200 rounded">
@@ -172,7 +173,7 @@ const Checkout = () => {
             {cartItems.map((item) => (
               <div key={item.cartItemId} className="flex space-x-4">
                 <img
-                  src={item.images[0]}
+                  src={item.image || getProductImage(item)}
                   alt={item.name}
                   className="w-16 h-16 object-cover rounded"
                 />

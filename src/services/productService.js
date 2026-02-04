@@ -11,9 +11,13 @@ export const productService = {
     if (filters.category && filters.category !== 'All') {
       params.append('category', filters.category);
     }
-    if (filters.brands && filters.brands.length > 0) {
-      filters.brands.forEach(brand => params.append('brand', brand));
+    if (filters.categoryId) {
+      params.append('categoryId', filters.categoryId);
     }
+    if (filters.subCategoryId) {
+      params.append('subCategoryId', filters.subCategoryId);
+    }
+
     if (filters.minPrice) {
       params.append('minPrice', filters.minPrice);
     }
@@ -50,8 +54,8 @@ export const productService = {
   },
 
   // Search products
-  search: async (query) => {
-    const response = await api.get(`/products/search?q=${query}`);
+  search: async (query, page = 1, limit = 10) => {
+    const response = await api.get(`/products/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
     return response.data;
   },
 

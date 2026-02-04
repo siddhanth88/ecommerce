@@ -23,8 +23,8 @@ router.get('/category/:category', getProductsByCategory);
 router.get('/:id', getProduct);
 
 // Admin routes
-router.post('/', protect, admin, upload.array('images', 5), createProduct);
-router.put('/:id', protect, admin, upload.array('images', 5), updateProduct);
+router.post('/', protect, admin, upload.any(), createProduct);
+router.put('/:id', protect, admin, upload.any(), updateProduct);
 router.delete('/:id', protect, admin, deleteProduct);
 
 // Inventory routes

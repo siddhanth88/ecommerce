@@ -16,7 +16,6 @@ export const ProductsProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [categories, setCategories] = useState(['All', ...productsData.categories]);
-  const [brands, setBrands] = useState(productsData.brands);
   const [config, setConfig] = useState(productsData.config);
   const [homeConfig, setHomeConfig] = useState(productsData.home || {});
   const [loading, setLoading] = useState(false);
@@ -30,7 +29,9 @@ export const ProductsProvider = ({ children }) => {
   // Filters state
   const [filters, setFilters] = useState({
     category: 'All',
-    brands: [],
+    categoryId: '',
+    subCategoryId: '',
+
     minPrice: 0,
     maxPrice: 1000,
     search: '',
@@ -91,7 +92,7 @@ export const ProductsProvider = ({ children }) => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [filters.category, filters.brands, filters.minPrice, filters.maxPrice, filters.search, filters.sortBy, filters.page]);
+  }, [filters]); // Watch entire filters object
 
   // Update filter
   const updateFilter = (filterName, value) => {
@@ -115,7 +116,9 @@ export const ProductsProvider = ({ children }) => {
   const resetFilters = () => {
     setFilters({
       category: 'All',
-      brands: [],
+      categoryId: '',
+      subCategoryId: '',
+
       minPrice: priceRange.min,
       maxPrice: priceRange.max,
       search: '',
@@ -160,7 +163,7 @@ export const ProductsProvider = ({ children }) => {
     products,
     filteredProducts,
     categories,
-    brands,
+
     config,
     homeConfig,
     filters,
@@ -180,7 +183,7 @@ export const ProductsProvider = ({ children }) => {
     products,
     filteredProducts,
     categories,
-    brands,
+
     config,
     homeConfig,
     filters,

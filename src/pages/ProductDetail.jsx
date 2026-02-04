@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, Star, Heart, Share2, Truck, RotateCcw } from 'lucide-react';
 import { useProducts } from '../contexts/ProductsContext';
@@ -13,8 +13,8 @@ import ColorSelector from '../components/product/ColorSelector';
 import QuantitySelector from '../components/product/QuantitySelector';
 import ProductCard from '../components/product/ProductCard';
 import Button from '../components/common/Button';
-import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useCategoryTree } from '../hooks/useCategoryTree';
 import { getDisplayPrice, getLeastAvailableSize } from '../utils/sizeUtils';
 
 const ProductDetail = () => {
@@ -36,22 +36,86 @@ const ProductDetail = () => {
     return getLeastAvailableSize(p);
   };
 
+  // Helper to get initial color index (default color or first)
+  const getInitialColorIndex = (p) => {
+    if (!p?.colorVariants?.length) return 0;
+    const defaultIndex = p.colorVariants.findIndex(c => c.isDefault);
+    return defaultIndex >= 0 ? defaultIndex : 0;
+  };
+
   const [selectedSize, setSelectedSize] = useState('');
-  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   const [isLoading, setIsLoading] = useState(!existingProduct);
   const [showError, setShowError] = useState(false);
+  const [error, setError] = useState(null);
   const [recentlyViewed, setRecentlyViewed] = useLocalStorage('recentlyViewed', []);
+  const { getCategoryBreadcrumbs } = useCategoryTree();
+
+  const breadcrumbs = useMemo(() => {
+    if (!product) return [];
+    // Deepest category ID
+    const deepId = product.subCategoryId || product.categoryId;
+    if (!deepId) return [];
+    return getCategoryBreadcrumbs(deepId);
+  }, [product, getCategoryBreadcrumbs]);
+
+  // Get images for selected color
+  const selectedColorImages = useMemo(() => {
+    if (!product) return [];
+
+    // Check for colorVariants first (new structure)
+    if (product.colorVariants?.length > 0) {
+      const colorVariant = product.colorVariants[selectedColorIndex];
+      if (colorVariant?.images?.length > 0) {
+        return colorVariant.images;
+      }
+    }
+
+    // Fallback to imageDataArray or images
+    return product.imageDataArray?.length > 0
+      ? product.imageDataArray
+      : (product.images || []);
+  }, [product, selectedColorIndex]);
+
+  // Get selected color info
+  const selectedColor = useMemo(() => {
+    if (!product?.colorVariants?.length) return null;
+    return product.colorVariants[selectedColorIndex];
+  }, [product, selectedColorIndex]);
+
+  // Backward compatible - get color hex for cart
+  const selectedColorHex = useMemo(() => {
+    if (selectedColor) return selectedColor.hexCode;
+    // Fallback to legacy colors array
+    if (product?.colors?.length > 0) {
+      return product.colors[selectedColorIndex] || product.colors[0];
+    }
+    return null;
+  }, [selectedColor, product, selectedColorIndex]);
+
+  // Reset state when ID changes to ensure we don't show old product data
+  useEffect(() => {
+    const existing = getProductById(id);
+    setProduct(existing);
+    if (existing) {
+      setSelectedSize(getInitialSize(existing));
+      setSelectedColorIndex(getInitialColorIndex(existing));
+    } else {
+      setSelectedSize('');
+      setSelectedColorIndex(0);
+    }
+    setQuantity(1);
+    setIsLoading(!existing);
+    setError(null);
+  }, [id, getProductById]);
 
   useEffect(() => {
     let isMounted = true;
 
     const fetchProduct = async () => {
-      // If we don't have the product or it's a different one, start loading
-      if (!product || (product._id !== id && product.id !== id)) {
-        setIsLoading(true);
-      }
+      // We already handled initial state in the ID watch effect
 
       try {
         const data = await productService.getById(id);
@@ -60,30 +124,30 @@ const ProductDetail = () => {
         const foundProduct = data.product;
 
         if (foundProduct) {
-          // Use a separate variable for related to avoid stale closures if needed
           const related = getRelatedProducts(id);
           const defaultSize = getLeastAvailableSize(foundProduct);
+          const defaultColorIdx = getInitialColorIndex(foundProduct);
 
           setProduct(foundProduct);
           setRelatedProducts(related);
 
-          if (!selectedSize && defaultSize) {
+          // Only update selections if user hasn't made them yet or we just switched products
+          if (!product || product._id !== foundProduct._id) {
             setSelectedSize(defaultSize);
-          }
-
-          if (foundProduct.colors && foundProduct.colors.length === 1 && !selectedColor) {
-            setSelectedColor(foundProduct.colors[0]);
+            setSelectedColorIndex(defaultColorIdx);
           }
 
           setRecentlyViewed(prev => {
             const filtered = (prev || []).filter(pid => pid !== id);
             return [id, ...filtered].slice(0, 10);
           });
+        } else {
+          setError('Product not found');
         }
       } catch (err) {
         if (isMounted) {
           console.error('Failed to fetch product:', err);
-          navigate('/');
+          setError(err.response?.data?.error || 'Failed to load product details. Please try again later.');
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -92,28 +156,27 @@ const ProductDetail = () => {
 
     fetchProduct();
     return () => { isMounted = false; };
-  }, [id, navigate, setRecentlyViewed, getRelatedProducts]); // getRelatedProducts is now memoized so it's safe
+  }, [id, setRecentlyViewed, getRelatedProducts]);
 
   // Handlers to update selections
   const handleSizeSelect = (size) => {
-    console.log('[ProductDetail] Size selected:', size, '| Current showError:', showError);
+    console.log('[ProductDetail] Size selected:', size);
     setSelectedSize(size);
   };
 
-  const handleColorSelect = (color) => {
-    console.log('[ProductDetail] Color selected:', color, '| Current showError:', showError);
-    setSelectedColor(color);
+  const handleColorSelect = (index) => {
+    console.log('[ProductDetail] Color selected:', index);
+    setSelectedColorIndex(index);
   };
-
-  // Debug: Log when selectedColor or showError changes
-  useEffect(() => {
-    console.log('[ProductDetail] State changed - selectedColor:', selectedColor, '| showError:', showError, '| Should show error:', showError && !selectedColor);
-  }, [selectedColor, showError]);
 
   const handleAddToCart = () => {
     setShowError(false);
-    console.log('Adding to cart:', { product: product.name, selectedSize, selectedColor, quantity });
-    const success = addToCart(product, selectedSize, selectedColor, quantity);
+
+    // Determine if color selection is required
+    const hasMultipleColors = (product.colorVariants?.length > 1) || (product.colors?.length > 1);
+
+    console.log('Adding to cart:', { product: product.name, selectedSize, selectedColorHex, quantity });
+    const success = addToCart(product, selectedSize, selectedColorHex, quantity);
     if (!success) {
       console.log('Add to cart failed');
       setShowError(true);
@@ -130,7 +193,34 @@ const ProductDetail = () => {
     }
   };
 
-  const displayPrice = getDisplayPrice(product, selectedSize);
+  const displayPrice = getDisplayPrice(product, selectedSize, selectedColorHex);
+
+  // Determine if product has multiple colors
+  const hasMultipleColors = product && (
+    (product.colorVariants?.length > 1) ||
+    (product.colors?.length > 1)
+  );
+
+  // Determine if using new colorVariants structure
+  const hasColorVariants = product?.colorVariants?.length > 0;
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600 mb-4">
+          <X className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-bold mb-2">Error</h2>
+        <p className="text-gray-600 mb-8">{error}</p>
+        <Link
+          to="/products"
+          className="inline-flex items-center gap-2 bg-black text-white px-8 py-3 font-medium hover:bg-gray-800 transition-colors"
+        >
+          BACK TO SHOP
+        </Link>
+      </div>
+    );
+  }
 
   if (isLoading || !product) {
     return (
@@ -143,12 +233,23 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <nav className="flex items-center gap-2 text-sm text-gray-500">
-          <Link to="/" className="hover:text-black transition-colors">Home</Link>
-          <ChevronRight className="w-4 h-4" />
-          <Link to="/" className="hover:text-black transition-colors">{product.category}</Link>
-          <ChevronRight className="w-4 h-4" />
-          <span className="text-black">{product.name}</span>
+        <nav className="flex items-center gap-2 text-sm text-gray-500 overflow-x-auto whitespace-nowrap scrollbar-hide">
+          <Link to="/" className="hover:text-black transition-colors flex-shrink-0">Home</Link>
+          <ChevronRight className="w-4 h-4 flex-shrink-0" />
+
+          {breadcrumbs.map((crumb, index) => (
+            <React.Fragment key={crumb._id}>
+              <Link
+                to={index === 0 ? `/products?categoryId=${crumb._id}` : `/products?categoryId=${breadcrumbs[0]._id}&subCategoryId=${crumb._id}`}
+                className="hover:text-black transition-colors flex-shrink-0"
+              >
+                {crumb.name}
+              </Link>
+              <ChevronRight className="w-4 h-4 flex-shrink-0" />
+            </React.Fragment>
+          ))}
+
+          <span className="text-black truncate">{product.name}</span>
         </nav>
       </div>
 
@@ -156,9 +257,10 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           <div>
             <ProductGallery
-              images={(product.imageDataArray && product.imageDataArray.length > 0)
+              images={product.imageDataArray?.length > 0
                 ? [...product.imageDataArray, ...(product.images || [])]
-                : (product.images && product.images.length > 0 ? product.images : ['https://via.placeholder.com/600x600?text=No+Image'])}
+                : product.images}
+              selectedColorImages={selectedColorImages}
               productName={product.name}
               isFavorite={isFavorite}
               onToggleFavorite={handleToggleFavorite}
@@ -167,7 +269,7 @@ const ProductDetail = () => {
 
           <div className="space-y-6">
             <div>
-              <p className="text-sm text-gray-500 mb-1">{product.brand}</p>
+
               <h1 className="text-3xl sm:text-4xl font-bold">{product.name}</h1>
             </div>
 
@@ -198,48 +300,106 @@ const ProductDetail = () => {
             </div>
 
             <div>
-              {selectedSize && product.size_variants?.[selectedSize] ? (
-                product.size_variants[selectedSize].stock > 0 ? (
-                  <p className="text-sm text-green-600 font-medium">
-                    ✓ In Stock ({product.size_variants[selectedSize].stock} available for size {selectedSize})
-                  </p>
-                ) : (
-                  <p className="text-sm text-red-600 font-medium">Size {selectedSize} is Out of Stock</p>
-                )
-              ) : product.stock > 0 ? (
-                <p className="text-sm text-green-600 font-medium">✓ In Stock ({product.stock} total available)</p>
-              ) : (
-                <p className="text-sm text-red-600 font-medium">Out of Stock</p>
-              )}
+              {(() => {
+                // Logic to determine stock for current selection
+                const currentVariant = hasColorVariants ? product.colorVariants[selectedColorIndex] : null;
+
+                let stock = 0;
+                let isAvailable = false;
+
+                if (selectedSize) {
+                  if (currentVariant && currentVariant.sizes) {
+                    const sizeObj = currentVariant.sizes.find(s => s.size === selectedSize);
+                    stock = sizeObj ? sizeObj.stock : 0;
+                  } else if (product.size_variants?.[selectedSize]) {
+                    stock = product.size_variants[selectedSize].stock;
+                  } else {
+                    // Fallback to global stock if no size variants map
+                    stock = product.stock;
+                  }
+                  isAvailable = stock > 0;
+                } else {
+                  // No size selected, showing global status
+                  // If colors exist, maybe show "Select Size" or aggregated stock
+                  stock = product.stock; // Total stock calculated by virtual
+                  isAvailable = stock > 0;
+                }
+
+                if (selectedSize) {
+                  if (isAvailable) {
+                    return (
+                      <p className="text-sm text-green-600 font-medium">
+                        ✓ In Stock ({stock} available for size {selectedSize})
+                      </p>
+                    );
+                  } else {
+                    return (
+                      <p className="text-sm text-red-600 font-medium">Size {selectedSize} is Out of Stock</p>
+                    );
+                  }
+                } else {
+                  // Global status
+                  if (isAvailable) {
+                    return <p className="text-sm text-green-600 font-medium">✓ In Stock ({stock} total available)</p>;
+                  } else {
+                    return <p className="text-sm text-red-600 font-medium">Out of Stock</p>;
+                  }
+                }
+              })()}
             </div>
 
             <p className="text-gray-600 leading-relaxed">{product.description}</p>
+
+            {/* Color Selector - Show BEFORE size selector, only if multiple colors */}
+            {hasMultipleColors && (
+              <ColorSelector
+                colorVariants={hasColorVariants ? product.colorVariants : []}
+                selectedColorIndex={selectedColorIndex}
+                onSelectColor={handleColorSelect}
+                error={showError && selectedColorIndex === null}
+                showPreview={true}
+                // Legacy props for backward compatibility
+                colors={!hasColorVariants ? product.colors : []}
+                colorNames={!hasColorVariants ? product.colorNames : []}
+                selectedColor={selectedColorHex}
+              />
+            )}
 
             {product.sizes && product.sizes.length > 0 && (
               <SizeSelector
                 sizes={product.sizes}
                 selectedSize={selectedSize}
                 onSelectSize={handleSizeSelect}
-                stock={selectedSize && product.size_variants?.[selectedSize] ? product.size_variants[selectedSize].stock : product.stock}
+                stock={(() => {
+                  const currentVariant = hasColorVariants ? product.colorVariants[selectedColorIndex] : null;
+                  if (currentVariant && currentVariant.sizes) {
+                    const s = currentVariant.sizes.find(sz => sz.size === selectedSize);
+                    return s ? s.stock : 0;
+                  }
+                  return selectedSize && product.size_variants?.[selectedSize] ? product.size_variants[selectedSize].stock : product.stock;
+                })()}
                 error={showError && !selectedSize}
-                availableSizes={product.available_sizes}
-              />
-            )}
-
-            {product.colors.length > 1 && (
-              <ColorSelector
-                colors={product.colors}
-                colorNames={product.colorNames || []}
-                selectedColor={selectedColor}
-                onSelectColor={handleColorSelect}
-                error={showError && !selectedColor}
+                availableSizes={(() => {
+                  const currentVariant = hasColorVariants ? product.colorVariants[selectedColorIndex] : null;
+                  if (currentVariant && currentVariant.sizes) {
+                    return currentVariant.sizes.filter(s => s.stock > 0).map(s => s.size);
+                  }
+                  return product.available_sizes;
+                })()}
               />
             )}
 
             <QuantitySelector
               quantity={quantity}
               onQuantityChange={setQuantity}
-              stock={selectedSize && product.size_variants?.[selectedSize] ? product.size_variants[selectedSize].stock : product.stock}
+              stock={(() => {
+                const currentVariant = hasColorVariants ? product.colorVariants[selectedColorIndex] : null;
+                if (currentVariant && currentVariant.sizes && selectedSize) {
+                  const s = currentVariant.sizes.find(sz => sz.size === selectedSize);
+                  return s ? s.stock : 0;
+                }
+                return selectedSize && product.size_variants?.[selectedSize] ? product.size_variants[selectedSize].stock : product.stock;
+              })()}
             />
 
             <div className="flex gap-3">
@@ -249,8 +409,14 @@ const ProductDetail = () => {
                 className="flex-1"
                 onClick={handleAddToCart}
                 disabled={
-                  (selectedSize && product.size_variants?.[selectedSize]?.stock === 0) ||
-                  (!selectedSize && product.stock === 0)
+                  (() => {
+                    const currentVariant = hasColorVariants ? product.colorVariants[selectedColorIndex] : null;
+                    if (currentVariant && currentVariant.sizes && selectedSize) {
+                      const s = currentVariant.sizes.find(sz => sz.size === selectedSize);
+                      return !s || s.stock === 0;
+                    }
+                    return (selectedSize && product.size_variants?.[selectedSize]?.stock === 0) || (!selectedSize && product.stock === 0);
+                  })()
                 }
               >
                 ADD TO CART
@@ -313,21 +479,22 @@ const ProductDetail = () => {
 
             {activeTab === 'specifications' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Brand</p>
-                  <p className="text-base">{product.brand}</p>
-                </div>
+
                 <div>
                   <p className="text-sm font-medium text-gray-500">Category</p>
                   <p className="text-base">{product.category}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Available Sizes</p>
-                  <p className="text-base">{product.sizes.join(', ')}</p>
+                  <p className="text-base">{product.sizes?.join(', ') || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Available Colors</p>
-                  <p className="text-base">{product.colorNames?.join(', ') || product.colors.length}</p>
+                  <p className="text-base">
+                    {hasColorVariants
+                      ? product.colorVariants.map(c => c.name).join(', ')
+                      : (product.colorNames?.join(', ') || product.colors?.length || 'N/A')}
+                  </p>
                 </div>
               </div>
             )}

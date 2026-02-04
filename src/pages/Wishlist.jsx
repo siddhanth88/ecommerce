@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Trash2, Heart, ArrowRight, X } from 'lucide-react';
 import { useWishlist } from '../contexts/WishlistContext';
@@ -7,6 +7,7 @@ import { formatPrice } from '../utils/formatPrice';
 import Button from '../components/common/Button';
 import QuickAddModal from '../components/product/QuickAddModal';
 import { getDisplayPrice } from '../utils/sizeUtils';
+import { getProductImage } from '../utils/imageUtils';
 
 const Wishlist = () => {
     const { wishlistItems, toggleWishlist, loading } = useWishlist();
@@ -14,17 +15,26 @@ const Wishlist = () => {
     const navigate = useNavigate();
     const [addingToCart, setAddingToCart] = useState(null);
     const [quickAddProduct, setQuickAddProduct] = useState(null);
+    const [modalInitialColorIndex, setModalInitialColorIndex] = useState(0);
 
-    const handleAddToCart = (product) => {
+    const handleAddToCart = (product, initialColorIndex = 0) => {
         // For products with multiple variants, open modal
-        if ((product.sizes && product.sizes.length > 1) || (product.colors && product.colors.length > 1)) {
+        if ((product.sizes && product.sizes.length > 1) || (product.colorVariants?.length > 1) || (product.colors?.length > 1)) {
+            setModalInitialColorIndex(initialColorIndex);
             setQuickAddProduct(product);
             return;
         }
 
         // For single variant products, add directly
         const defaultSize = product.sizes?.length === 1 ? product.sizes[0] : null;
-        const defaultColor = product.colors?.length === 1 ? product.colors[0] : null;
+
+        // Use the passed color index if available, else fallback
+        let defaultColor;
+        if (product.colorVariants?.length > 0) {
+            defaultColor = product.colorVariants[initialColorIndex]?.hexCode;
+        } else {
+            defaultColor = product.colors?.[initialColorIndex] || product.colors?.[0] || null;
+        }
 
         setAddingToCart(product._id);
         addToCart(product, defaultSize, defaultColor);
@@ -59,105 +69,13 @@ const Wishlist = () => {
             {wishlistItems.length > 0 ? (
                 <div className="space-y-6">
                     {wishlistItems.map((product) => (
-                        <div
+                        <WishlistItem
                             key={product._id}
-                            className="flex flex-col sm:flex-row gap-6 p-4 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow group relative"
-                        >
-                            {/* Remove Button (Top Right absolute) */}
-                            <button
-                                onClick={() => toggleWishlist(product._id)}
-                                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors z-10"
-                                aria-label="Remove from wishlist"
-                            >
-                                <Trash2 className="w-5 h-5" />
-                            </button>
-
-                            {/* Image */}
-                            <div className="w-full sm:w-40 aspect-[3/4] sm:aspect-square flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
-                                <Link to={`/product/${product._id}`}>
-                                    <img
-                                        src={(product.imageDataArray && product.imageDataArray[0]) || (product.images && product.images[0]) || 'https://via.placeholder.com/300x400?text=No+Image'}
-                                        alt={product.name}
-                                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                                    />
-                                </Link>
-                            </div>
-
-                            {/* Details */}
-                            <div className="flex-1 flex flex-col justify-between py-1">
-                                <div>
-                                    <div className="flex justify-between items-start pr-12">
-                                        <div>
-                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{product.brand}</p>
-                                            <Link to={`/product/${product._id}`}>
-                                                <h3 className="text-lg font-bold text-gray-900 hover:text-gray-700 transition-colors">
-                                                    {product.name}
-                                                </h3>
-                                            </Link>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-3 flex items-center gap-3">
-                                        <p className="text-lg font-bold text-black">
-                                            {formatPrice(getDisplayPrice(product))}
-                                        </p>
-                                        {product.originalPrice && (
-                                            <>
-                                                <p className="text-sm text-gray-400 line-through">
-                                                    {formatPrice(product.originalPrice)}
-                                                </p>
-                                                <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded">
-                                                    -{product.discount}%
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
-
-                                    {(product.sizes?.length > 0 || product.colors?.length > 0) && (
-                                        <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-500">
-                                            {product.sizes?.length > 0 && (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-medium text-gray-900">Sizes:</span>
-                                                    <span>{product.sizes.join(', ')}</span>
-                                                </div>
-                                            )}
-                                            {product.colors?.length > 0 && (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-medium text-gray-900">Colors:</span>
-                                                    <div className="flex gap-1">
-                                                        {product.colors.map(color => (
-                                                            <div
-                                                                key={color}
-                                                                className="w-3 h-3 rounded-full border border-gray-200"
-                                                                style={{ backgroundColor: color }}
-                                                                title={color}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="mt-6 sm:mt-0 pt-4 sm:pt-0 sm:self-start w-full sm:w-auto">
-                                    <button
-                                        onClick={() => handleAddToCart(product)}
-                                        disabled={addingToCart === product._id}
-                                        className="w-full sm:w-auto px-6 py-3 bg-black text-white text-sm font-bold tracking-widest hover:bg-gray-800 transition-colors rounded-lg flex items-center justify-center gap-2"
-                                    >
-                                        {addingToCart === product._id ? (
-                                            'Added!'
-                                        ) : (
-                                            <>
-                                                <ShoppingBag className="w-4 h-4" />
-                                                {(product.sizes?.length > 1 || product.colors?.length > 1) ? 'Select Options' : 'Add to Bag'}
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                            product={product}
+                            onToggleWishlist={toggleWishlist}
+                            onAddToCart={handleAddToCart}
+                            addingToCart={addingToCart}
+                        />
                     ))}
                 </div>
             ) : (
@@ -183,7 +101,132 @@ const Wishlist = () => {
                 product={quickAddProduct}
                 isOpen={!!quickAddProduct}
                 onClose={() => setQuickAddProduct(null)}
+                initialColorIndex={modalInitialColorIndex}
             />
+        </div>
+    );
+};
+
+const WishlistItem = ({ product, onToggleWishlist, onAddToCart, addingToCart }) => {
+    const [selectedColorIndex, setSelectedColorIndex] = useState(0);
+
+    const hasColorVariants = product.colorVariants?.length > 0;
+
+    const displayImage = useMemo(() => {
+        if (hasColorVariants && product.colorVariants[selectedColorIndex]?.images?.length > 0) {
+            return product.colorVariants[selectedColorIndex].images[0];
+        }
+        return getProductImage(product);
+    }, [product, selectedColorIndex, hasColorVariants]);
+
+    return (
+        <div className="flex flex-col sm:flex-row gap-6 p-4 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow group relative">
+            {/* Remove Button (Top Right absolute) */}
+            <button
+                onClick={() => onToggleWishlist(product._id)}
+                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors z-10"
+                aria-label="Remove from wishlist"
+            >
+                <Trash2 className="w-5 h-5" />
+            </button>
+
+            {/* Image */}
+            <div className="w-full sm:w-40 aspect-[3/4] sm:aspect-square flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden relative">
+                <Link to={`/product/${product._id}`}>
+                    <img
+                        src={displayImage}
+                        alt={product.name}
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                    />
+                </Link>
+            </div>
+
+            {/* Details */}
+            <div className="flex-1 flex flex-col justify-between py-1">
+                <div>
+                    <div className="flex justify-between items-start pr-12">
+                        <div>
+                            <Link to={`/product/${product._id}`}>
+                                <h3 className="text-lg font-bold text-gray-900 hover:text-gray-700 transition-colors">
+                                    {product.name}
+                                </h3>
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div className="mt-3 flex items-center gap-3">
+                        <p className="text-lg font-bold text-black">
+                            {formatPrice(getDisplayPrice(product, null, hasColorVariants ? product.colorVariants[selectedColorIndex]?.hexCode : product.colors?.[selectedColorIndex]))}
+                        </p>
+                        {product.originalPrice && (
+                            <>
+                                <p className="text-sm text-gray-400 line-through">
+                                    {formatPrice(product.originalPrice)}
+                                </p>
+                                <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded">
+                                    -{product.discount}%
+                                </span>
+                            </>
+                        )}
+                    </div>
+
+                    <div className="mt-4 space-y-3 font-medium">
+                        {product.sizes?.length > 0 && (
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <span className="text-gray-900">Sizes:</span>
+                                <span>{product.sizes.join(', ')}</span>
+                            </div>
+                        )}
+
+                        {/* Color Selector Mini */}
+                        {(hasColorVariants || product.colors?.length > 0) && (
+                            <div className="flex flex-col gap-2">
+                                <span className="text-xs text-gray-900 font-medium">Available Colors:</span>
+                                <div className="flex gap-2">
+                                    {hasColorVariants ? (
+                                        product.colorVariants.map((variant, idx) => (
+                                            <button
+                                                key={variant.hexCode + idx}
+                                                onClick={() => setSelectedColorIndex(idx)}
+                                                className={`w-6 h-6 rounded-full border-2 transition-all ${selectedColorIndex === idx ? 'border-black scale-110' : 'border-gray-200'}`}
+                                                style={{ backgroundColor: variant.hexCode }}
+                                                title={variant.name}
+                                            />
+                                        ))
+                                    ) : (
+                                        product.colors?.map((color, idx) => (
+                                            <button
+                                                key={color + idx}
+                                                onClick={() => setSelectedColorIndex(idx)}
+                                                className={`w-6 h-6 rounded-full border-2 transition-all ${selectedColorIndex === idx ? 'border-black scale-110' : 'border-gray-200'}`}
+                                                style={{ backgroundColor: color }}
+                                                title={product.colorNames?.[idx] || color}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="mt-6 sm:mt-0 pt-4 sm:pt-0 sm:self-start w-full sm:w-auto">
+                    <button
+                        onClick={() => onAddToCart(product, selectedColorIndex)}
+                        disabled={addingToCart === product._id}
+                        className="w-full sm:w-auto px-6 py-3 bg-black text-white text-sm font-bold tracking-widest hover:bg-gray-800 transition-colors rounded-lg flex items-center justify-center gap-2"
+                    >
+                        {addingToCart === product._id ? (
+                            'Added!'
+                        ) : (
+                            <>
+                                <ShoppingBag className="w-4 h-4" />
+                                {(product.sizes?.length > 1 || product.colorVariants?.length > 1 || product.colors?.length > 1) ? 'Select Options' : 'Add to Bag'}
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };

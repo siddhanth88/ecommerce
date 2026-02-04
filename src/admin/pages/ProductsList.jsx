@@ -5,6 +5,7 @@ import AdminLayout from '../layouts/AdminLayout';
 import productService from '../../services/productService'; // Fixed relative import path
 import Loader from '../../components/common/Loader';
 import { formatPrice } from '../../utils/formatPrice';
+import { getProductImage } from '../../utils/imageUtils';
 
 const ProductsList = () => {
   const [products, setProducts] = useState([]);
@@ -111,7 +112,7 @@ const ProductsList = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-4">
                         <img
-                          src={(product.imageDataArray && product.imageDataArray[0]) || (product.images && product.images[0]) || 'https://via.placeholder.com/50x50?text=No+Image'}
+                          src={getProductImage(product)}
                           alt={product.name}
                           className="w-12 h-12 rounded object-cover"
                         />

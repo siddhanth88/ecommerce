@@ -1,25 +1,48 @@
-import React, { useState, useRef } from 'react';
-import { ChevronUp, ChevronDown, Heart } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ChevronUp, ChevronDown, Heart, Loader } from 'lucide-react';
 
 /**
  * Product Gallery Component with Advanced Magnification
  * @param {Object} props
- * @param {Array} props.images - Array of image URLs
+ * @param {Array} props.images - Array of image URLs (fallback)
+ * @param {Array} props.selectedColorImages - Images for currently selected color
  * @param {string} props.productName - Product name for alt text
  * @param {boolean} props.isFavorite - Favorite state
  * @param {Function} props.onToggleFavorite - Toggle favorite handler
  */
-const ProductGallery = ({ images = [], productName, isFavorite, onToggleFavorite }) => {
+const ProductGallery = ({
+  images = [],
+  selectedColorImages = [],
+  productName,
+  isFavorite,
+  onToggleFavorite
+}) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [showZoom, setShowZoom] = useState(false);
   const [zoomStyle, setZoomStyle] = useState({});
   const [lensStyle, setLensStyle] = useState({});
   const [thumbnailOffset, setThumbnailOffset] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const mainImageRef = useRef(null);
 
-  // Fallback for empty images
-  const galleryImages = images.length > 0 ? images : ['https://via.placeholder.com/600x600?text=No+Image'];
+  // Determine which images to display - prioritize selectedColorImages
+  const galleryImages = selectedColorImages.length > 0
+    ? selectedColorImages
+    : (images.length > 0 ? images : ['https://via.placeholder.com/600x600?text=No+Image']);
+
+  // Reset selected image when color changes (selectedColorImages changes)
+  useEffect(() => {
+    setSelectedImage(0);
+    setThumbnailOffset(0);
+
+    // Show brief loading state when images change
+    if (selectedColorImages.length > 0) {
+      setIsLoading(true);
+      const timer = setTimeout(() => setIsLoading(false), 150);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedColorImages]);
 
   const handleMouseMove = (e) => {
     if (!mainImageRef.current) return;
@@ -99,14 +122,19 @@ const ProductGallery = ({ images = [], productName, isFavorite, onToggleFavorite
           >
             {galleryImages.map((image, index) => (
               <button
-                key={index}
+                key={`${image}-${index}`}
                 onClick={() => setSelectedImage(index)}
                 className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 flex-shrink-0 ${selectedImage === index
                   ? 'border-black shadow-md'
                   : 'border-transparent hover:border-gray-200'
                   }`}
               >
-                <img src={image} alt="" className="w-full h-full object-cover" />
+                <img
+                  src={image}
+                  alt={`${productName} view ${index + 1}`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
               </button>
             ))}
           </div>
@@ -122,6 +150,13 @@ const ProductGallery = ({ images = [], productName, isFavorite, onToggleFavorite
 
       {/* Main Image View */}
       <div className="relative flex-1 aspect-square bg-gray-50 rounded-xl overflow-hidden group border border-gray-100 shadow-sm">
+        {/* Loading overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-30">
+            <Loader className="w-8 h-8 text-gray-400 animate-spin" />
+          </div>
+        )}
+
         <div
           className="w-full h-full cursor-crosshair relative"
           onMouseMove={handleMouseMove}
@@ -132,7 +167,8 @@ const ProductGallery = ({ images = [], productName, isFavorite, onToggleFavorite
           <img
             src={galleryImages[selectedImage]}
             alt={productName}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-opacity duration-200"
+            style={{ opacity: isLoading ? 0.5 : 1 }}
           />
 
           {/* Zoom Lens */}
@@ -157,8 +193,9 @@ const ProductGallery = ({ images = [], productName, isFavorite, onToggleFavorite
         {/* Mobile Preview Indicator (Dots) */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 lg:hidden px-3 py-1.5 bg-white bg-opacity-80 rounded-full backdrop-blur-sm">
           {galleryImages.map((_, index) => (
-            <div
+            <button
               key={index}
+              onClick={() => setSelectedImage(index)}
               className={`w-1.5 h-1.5 rounded-full transition-all ${selectedImage === index ? 'bg-black w-4' : 'bg-gray-300'
                 }`}
             />
@@ -178,12 +215,17 @@ const ProductGallery = ({ images = [], productName, isFavorite, onToggleFavorite
       <div className="flex lg:hidden gap-3 overflow-x-auto pb-2 px-1 scrollbar-hide">
         {galleryImages.map((image, index) => (
           <button
-            key={index}
+            key={`mobile-${image}-${index}`}
             onClick={() => setSelectedImage(index)}
             className={`w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all ${selectedImage === index ? 'border-black' : 'border-transparent'
               }`}
           >
-            <img src={image} alt="" className="w-full h-full object-cover" />
+            <img
+              src={image}
+              alt={`${productName} view ${index + 1}`}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
           </button>
         ))}
       </div>

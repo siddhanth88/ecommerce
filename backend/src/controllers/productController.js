@@ -1,4 +1,5 @@
 import Product from '../models/Product.js';
+import Category from '../models/Category.js';
 
 /**
  * @desc    Get all products with filtering, sorting, and pagination
@@ -9,7 +10,9 @@ export const getProducts = async (req, res, next) => {
   try {
     const {
       category,
-      brand,
+      categoryId,
+      subCategoryId,
+
       minPrice,
       maxPrice,
       search,
@@ -24,16 +27,50 @@ export const getProducts = async (req, res, next) => {
     // Build query
     let query = { isActive: true };
 
-    // Category filter
+    // Category filter (legacy - string category name)
     if (category && category !== 'All') {
       query.category = category;
     }
 
-    // Brand filter
-    if (brand) {
-      const brands = Array.isArray(brand) ? brand : [brand];
-      query.brand = { $in: brands };
+    // Hierarchical Category filtering
+    if (categoryId || subCategoryId) {
+      const baseId = subCategoryId || categoryId;
+      
+      // Better way than recursion: Get all categories once or use Category.find
+      // For now, keep the helper but make sure it's reliable
+      const getDescendantIds = async (parentId) => {
+        try {
+          const children = await Category.find({ parentId }).select('_id');
+          let ids = [parentId];
+          for (const child of children) {
+            const childIds = await getDescendantIds(child._id);
+            ids = [...ids, ...childIds];
+          }
+          return ids;
+        } catch (e) {
+          console.error('[BACKEND] Error in getDescendantIds:', e);
+          return [parentId];
+        }
+      };
+
+      const allTargetIds = await getDescendantIds(baseId);
+      const categoryQuery = {
+        $or: [
+          { categoryId: { $in: allTargetIds } },
+          { subCategoryId: { $in: allTargetIds } }
+        ]
+      };
+
+      // Combine with existing query
+      if (query.$or) {
+        // If we already have an $or (unlikely at this point, but safe), we might need $and
+        query = { $and: [query, categoryQuery] };
+      } else {
+        Object.assign(query, categoryQuery);
+      }
     }
+
+
 
     // Price range filter
     if (minPrice || maxPrice) {
@@ -44,7 +81,25 @@ export const getProducts = async (req, res, next) => {
 
     // Search filter
     if (search) {
-      query.$text = { $search: search };
+      const searchRegex = new RegExp(search, 'i');
+      const searchQuery = {
+        $or: [
+          { name: { $regex: searchRegex } },
+          { description: { $regex: searchRegex } },
+          { category: { $regex: searchRegex } }
+        ]
+      };
+
+      if (query.$and) {
+        query.$and.push(searchQuery);
+      } else if (query.$or) {
+        // If we have category filter (which uses $or), wrap both in $and
+        const catQuery = { $or: query.$or };
+        delete query.$or;
+        query.$and = [catQuery, searchQuery];
+      } else {
+        Object.assign(query, searchQuery);
+      }
     }
 
     // Sorting
@@ -171,7 +226,7 @@ export const getProductsByCategory = async (req, res, next) => {
  */
 export const searchProducts = async (req, res, next) => {
   try {
-    const { q } = req.query;
+    const { q, page = 1, limit = 10 } = req.query;
 
     if (!q) {
       return res.status(400).json({
@@ -180,14 +235,31 @@ export const searchProducts = async (req, res, next) => {
       });
     }
 
-    const products = await Product.find({
-      $text: { $search: q },
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const searchRegex = new RegExp(q, 'i');
+    const searchQuery = {
+      $or: [
+        { name: { $regex: searchRegex } },
+        { description: { $regex: searchRegex } },
+        { category: { $regex: searchRegex } }
+      ],
       isActive: true
-    });
+    };
+
+    const total = await Product.countDocuments(searchQuery);
+    const products = await Product.find(searchQuery)
+      .skip(skip)
+      .limit(limitNum);
 
     res.status(200).json({
       success: true,
       count: products.length,
+      total,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum),
       products: products.map(product => {
         const productObj = product.toObject();
         if (product.imagesData && product.imagesData.length > 0) {
@@ -221,15 +293,59 @@ export const createProduct = async (req, res, next) => {
       }
     }
 
-    if (req.files && req.files.length > 0) {
-      productData.imagesData = req.files.map(file => ({
-        buffer: file.buffer,
-        contentType: file.mimetype
-      }));
+    // Parse colorVariants if it's a string (from FormData)
+    if (typeof productData.colorVariants === 'string') {
+      try {
+        productData.colorVariants = JSON.parse(productData.colorVariants);
+      } catch (e) {
+        console.error('Failed to parse colorVariants', e);
+      }
     }
 
-    // Calculate initial total stock if size_variants provided
-    if (productData.size_variants) {
+    // Process uploaded files
+    if (req.files && req.files.length > 0) {
+      const globalImagesData = []; // For legacy/main images
+
+      req.files.forEach(file => {
+        // Check if file belongs to a specific color variant
+        // Expected fieldname format: "variant_0_image", "variant_1_image", etc.
+        const variantMatch = file.fieldname.match(/^variant_(\d+)_image/);
+
+        if (variantMatch && productData.colorVariants && Array.isArray(productData.colorVariants)) {
+          const index = parseInt(variantMatch[1]);
+          if (productData.colorVariants[index]) {
+            if (!productData.colorVariants[index].images) {
+              productData.colorVariants[index].images = [];
+            }
+            // Add as data URI string
+            const base64 = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+            productData.colorVariants[index].images.push(base64);
+          }
+        } else if (file.fieldname === 'images') {
+           // Main product images (legacy)
+           globalImagesData.push({
+             buffer: file.buffer,
+             contentType: file.mimetype
+           });
+        }
+      });
+
+      if (globalImagesData.length > 0) {
+        productData.imagesData = globalImagesData;
+      }
+    }
+
+    // Calculate initial total stock
+    // Priority: colorVariants with sizes > size_variants > manual stock
+    if (productData.colorVariants && Array.isArray(productData.colorVariants) && productData.colorVariants.some(c => c.sizes && c.sizes.length > 0)) {
+       let total = 0;
+       productData.colorVariants.forEach(c => {
+         if (c.sizes) {
+           c.sizes.forEach(s => total += (Number(s.stock) || 0));
+         }
+       });
+       productData.stock = total;
+    } else if (productData.size_variants) {
       let totalStock = 0;
       Object.values(productData.size_variants).forEach(v => {
         totalStock += Number(v.stock) || 0;
@@ -277,15 +393,55 @@ export const updateProduct = async (req, res, next) => {
       }
     }
 
-    if (req.files && req.files.length > 0) {
-      updateData.imagesData = req.files.map(file => ({
-        buffer: file.buffer,
-        contentType: file.mimetype
-      }));
+    // Parse colorVariants if it's a string (from FormData)
+    if (typeof updateData.colorVariants === 'string') {
+      try {
+        updateData.colorVariants = JSON.parse(updateData.colorVariants);
+      } catch (e) {
+        console.error('Failed to parse colorVariants', e);
+      }
     }
 
-    // Recalculate total stock if size_variants is being updated
-    if (updateData.size_variants) {
+    // Process uploaded files for update
+    if (req.files && req.files.length > 0) {
+       const globalImagesData = [];
+
+       req.files.forEach(file => {
+        const variantMatch = file.fieldname.match(/^variant_(\d+)_image/);
+
+        if (variantMatch && updateData.colorVariants && Array.isArray(updateData.colorVariants)) {
+          const index = parseInt(variantMatch[1]);
+          if (updateData.colorVariants[index]) {
+            if (!updateData.colorVariants[index].images) {
+              updateData.colorVariants[index].images = [];
+            }
+            const base64 = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+            updateData.colorVariants[index].images.push(base64);
+          }
+        } else if (file.fieldname === 'images') {
+           globalImagesData.push({
+             buffer: file.buffer,
+             contentType: file.mimetype
+           });
+        }
+      });
+      
+      // Only update main images if new ones are provided
+      if (globalImagesData.length > 0) {
+        updateData.imagesData = globalImagesData;
+      }
+    }
+
+    // Recalculate total stock
+    if (updateData.colorVariants && Array.isArray(updateData.colorVariants) && updateData.colorVariants.some(c => c.sizes && c.sizes.length > 0)) {
+       let total = 0;
+       updateData.colorVariants.forEach(c => {
+         if (c.sizes) {
+           c.sizes.forEach(s => total += (Number(s.stock) || 0));
+         }
+       });
+       updateData.stock = total;
+    } else if (updateData.size_variants) {
       let totalStock = 0;
       Object.values(updateData.size_variants).forEach(v => {
         totalStock += Number(v.stock) || 0;
